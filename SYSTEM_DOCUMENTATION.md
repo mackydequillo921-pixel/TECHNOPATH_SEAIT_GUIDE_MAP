@@ -3,7 +3,7 @@
 ## Table of Contents
 1. [System Overview](#system-overview)
 2. [Architecture](#architecture)
-3. [Frontend (Flutter App)](#frontend-flutter-app)
+3. [Frontend (PWA)](#frontend-pwa)
 4. [Backend Services](#backend-services)
 5. [Database Structure](#database-structure)
 6. [Key Features](#key-features)
@@ -16,7 +16,7 @@
 
 ## System Overview
 
-**SEAIT Campus Guide** is a comprehensive mobile navigation application designed for the South East Asian Institute of Technology (SEAIT) campus. The system helps students, faculty, and visitors navigate the campus efficiently through an interactive map, QR code scanning, AI-powered chatbot assistance, and real-time notifications.
+**SEAIT Campus Guide** is a comprehensive Progressive Web App (PWA) designed for the South East Asian Institute of Technology (SEAIT) campus. The system helps students, faculty, and visitors navigate the campus efficiently through an interactive map, QR code scanning, AI-powered chatbot assistance, and real-time notifications.
 
 ### Purpose
 - Provide indoor and outdoor campus navigation
@@ -24,6 +24,7 @@
 - Offer AI-assisted guidance through a chatbot
 - Enable QR code-based quick location access
 - Support administrative functions for campus management
+- Work fully offline as an installable PWA on mobile and desktop
 
 ---
 
@@ -31,35 +32,41 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      SEAIT Campus Guide                          │
+│                    SEAIT Campus Guide (TechnoPath)              │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-│  │   Flutter    │  │   Flutter    │  │   Flutter    │         │
-│  │   Mobile App │  │   Web App    │  │  Desktop App │         │
-│  │  (Android/iOS│  │   (Future)   │  │   (Future)   │         │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘         │
+│  ┌─────────────────────────────────────────────────────────┐  │
+│  │           Progressive Web App (PWA)                      │  │
+│  │         ┌──────────────────────────────────────┐       │  │
+│  │         │  Vue.js 3 + Vite + Pinia State         │       │  │
+│  │         │  ┌─────────┐ ┌─────────┐ ┌──────────┐   │       │  │
+│  │         │  │HomeView │ │Navigate │ │Chatbot   │   │       │  │
+│  │         │  │ (Map)   │ │ (Route) │ │(AI Bot)  │   │       │  │
+│  │         │  └─────────┘ └─────────┘ └──────────┘   │       │  │
+│  │         │  ┌─────────┐ ┌─────────┐ ┌──────────┐   │       │  │
+│  │         │  │Settings │ │  QR     │ │Explore   │   │       │  │
+│  │         │  │ (Admin) │ │ Scanner │ │(Map View)│   │       │  │
+│  │         │  └─────────┘ └─────────┘ └──────────┘   │       │  │
+│  │         └──────────────────────────────────────────┘       │  │
+│  │         ┌──────────────────────────────────────┐           │  │
+│  │         │   Offline Storage: IndexedDB         │           │  │
+│  │         │   Dexie.js wrapper for client DB      │           │  │
+│  │         └──────────────────────────────────────┘           │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                           │                                     │
+│         ┌─────────────────┼─────────────────┐                  │
 │         │                 │                 │                  │
-│         └─────────────────┴─────────────────┘                  │
-│                         │                                       │
-│              ┌──────────▼──────────┐                           │
-│              │    API Service    │                           │
-│              │   (HTTP Client)   │                           │
-│              └──────────┬────────┘                           │
-│                         │                                       │
-│         ┌───────────────┼───────────────┐                    │
-│         │               │               │                    │
 │    ┌────▼────┐    ┌─────▼─────┐   ┌────▼────┐                │
-│    │ Node.js │    │   Dart    │   │ Flask   │                │
-│    │Backend  │    │  Backend  │   │Chatbot  │                │
-│    │(Port    │    │ (Port     │   │(Port    │                │
-│    │ 3000)   │    │  8080)    │   │ 5000)   │                │
-│    └────┬────┘    └─────┬─────┘   └────┬────┘                │
-│         │               │               │                    │
-│    ┌────▼────┐    ┌─────▼─────┐   ┌────▼────┐                │
-│    │ SQLite  │    │  SQLite   │   │ SQLite  │                │
-│    │ (Main)  │    │ (Guide)   │   │(Chatbot)│                │
-│    └─────────┘    └───────────┘   └─────────┘                │
+│    │ Django  │    │   Flask   │   │  Web    │                │
+│    │Backend  │    │ Chatbot   │   │Server   │                │
+│    │(Port    │    │ (Port     │   │(Static) │                │
+│    │ 8000)   │    │  5000)    │   │         │                │
+│    └────┬────┘    └─────┬─────┘   └─────────┘                │
+│         │               │                                     │
+│    ┌────▼────┐    ┌─────▼─────┐                               │
+│    │ SQLite  │    │  SQLite   │                               │
+│    │ (Main)  │    │(Chatbot)  │                               │
+│    └─────────┘    └───────────┘                               │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -68,37 +75,37 @@
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | Flutter (Dart) |
-| **Backend API** | Node.js + Express |
-| **Chatbot Service** | Python + Flask |
-| **Alternative Backend** | Dart + SQLite |
-| **Databases** | SQLite |
-| **HTTP Client** | `http` package |
-| **QR Scanning** | `mobile_scanner` |
-| **Local Storage** | `sqflite` |
+| **Frontend** | Vue.js 3 + Vite |
+| **State Management** | Pinia |
+| **Backend API** | Python Django + Django REST Framework |
+| **Chatbot Service** | Python Flask |
+| **Authentication** | JWT (SimpleJWT) |
+| **Databases** | SQLite (development), PostgreSQL (production ready) |
+| **HTTP Client** | Axios |
+| **QR Scanning** | jsQR (browser-based) |
+| **Offline Storage** | IndexedDB (Dexie.js) |
+| **Map Rendering** | Leaflet.js + SVG |
+| **Pathfinding** | Dijkstra (JavaScript, client-side) |
+| **GPS** | Web Geolocation API |
+| **PWA Support** | Vite PWA Plugin, Service Worker |
 
 ---
 
-## Frontend (Flutter App)
+## Frontend (PWA)
 
 ### Main Entry Point
-**File**: `lib/main.dart`
+**File**: `frontend/src/main.js`
 
-The application uses a Material Design 3 (Material You) theme with an orange color scheme (`Color(0xFFFF9800)`).
+The application uses a custom UI design with orange color scheme (`#FF9800`) optimized for both mobile and desktop viewing.
 
-### Core Screens
+### Core Views
 
-#### 1. Splash Screen (`SplashScreen`)
-- Displays SEAIT logo with fade and scale animations
-- 3-second duration before navigating to main app
-- Orange background theme
-
-#### 2. Home Screen (`HomeScreen`)
-- **Interactive Map**: Full-screen map with zoom/pan capabilities
-- **Facility Selector**: Dropdown for buildings (Building, RST Building, JST Building, MST Building)
-- **Room Selector**: Dropdown for classrooms (CL1, CL2, CL3, CL4, etc.)
+#### 1. Home View (`HomeView.vue`)
+- **Interactive Map**: Full-screen SVG map with zoom/pan capabilities
+- **Facility Selector**: Dropdown for buildings (RST Building, MST Building, JST Building)
+- **Room Selector**: Dropdown for classrooms (CL1-CL10)
 - **Search Bar**: Location search with autocomplete
-- **Floating Action Buttons**:
+- **Action Buttons**:
   - Menu (building/room/instructor info)
   - Locate (set current position)
   - Rate (app rating)
@@ -106,94 +113,113 @@ The application uses a Material Design 3 (Material You) theme with an orange col
   - Chatbot (AI assistant)
   - QR Scanner
 
-#### 3. Navigate Screen (`NavigateScreen`)
+#### 2. Navigate View (`NavigateView.vue`)
 - Turn-by-turn navigation interface
 - Route visualization on map
 - Building and room selection for navigation
+- Floor-aware pathfinding (multi-floor support)
+- Dijkstra algorithm for shortest path calculation
 
-#### 4. Settings Screen (`SettingsScreen`)
-- **Login Admin**: Admin authentication
+#### 3. Settings View (`SettingsView.vue`)
+- **Login Admin**: Admin authentication (JWT-based)
 - **Dark Mode**: Theme toggle
 - **About Us**: Application information
 - **Version Info**: Current version display
 - **Check for Updates**: Update checker
 
-### Additional Screens
+#### 4. Chatbot View (`ChatbotView.vue`)
+- AI conversation interface
+- Offline FAQ fallback support
+- Chat history with IndexedDB
+- Quick action chips for common questions
 
-| Screen | Description |
+#### 5. Explore/Map View (`ExploreView.vue`)
+- Full-screen interactive map
+- Facility and room filters
+- Floor selector (Ground to 3rd floor)
+- Map legend and building information
+
+### Additional Views
+
+| View | Description |
 |--------|-------------|
-| `BuildingInfoScreen` | Detailed building information |
-| `AdminInfoScreen` | Room administration panel |
-| `InstructorInfoScreen` | Faculty directory |
-| `EmployeesScreen` | Staff directory |
-| `NotificationsScreen` | Push notification history |
-| `ChatbotScreen` | AI conversation interface |
-| `QRScannerScreen` | QR code scanner |
-| `CampusMapScreen` | Full-screen interactive map |
+| `BuildingInfoView` | Detailed building information |
+| `AdminPanelView` | Room administration panel (admin only) |
+| `FeedbackView` | User feedback and ratings |
+| `NotificationsView` | Push notification history |
+| `FavoritesView` | Saved locations |
 
 ### Navigation Structure
 
-```dart
-MainNavigationShell (StatefulWidget)
-├── HomeScreen (index: 0)
-├── NavigateScreen (index: 1)
-└── SettingsScreen (index: 2)
+```javascript
+App.vue (Root Shell)
+├── Bottom Navigation (Mobile) / Sidebar (Desktop)
+│   ├── Home (index: 0)
+│   ├── Navigate (index: 1)
+│   └── Settings (index: 2)
+├── Menu Sheet (slide-up panel)
+│   ├── Building Info
+│   ├── Instructor Info
+│   ├── Feedback
+│   ├── Favorites
+│   └── About
 ```
 
 ---
 
 ## Backend Services
 
-### 1. Node.js Backend (`backend/`)
+### 1. Django Backend (`backend_django/`)
 
-**Main File**: `backend/server.js`
+**Main File**: `backend_django/manage.py`
 
 **Purpose**: Primary REST API server for the application
 
-**Endpoints**:
-- `/health` - Service health check
-- `/api/dashboard/stats` - Dashboard statistics
-- `/api/users` - User management (CRUD)
-- `/api/facilities` - Facility management
-- `/api/rooms` - Room management
-- `/api/map-markers` - Map marker positions
-- `/api/ratings` - User ratings
-- `/api/notifications` - Push notifications
-- `/api/chat-history` - Chatbot conversation history
-- `/api/app-usage` - Usage analytics
-
-**Database**: `backend/database.js` - SQLite database handler
-
-### 2. Dart Backend (`backend_dart/`)
-
-**Main File**: `backend_dart/bin/server.dart`
-
-**Purpose**: Alternative backend implementation in Dart
+**Key Apps**:
+- `users` - Admin user management with role-based access
+- `facilities` - Campus buildings and facilities
+- `rooms` - Classrooms, offices, and labs
+- `navigation` - Navigation nodes and edges for pathfinding
+- `chatbot` - FAQ entries and AI chat logs
+- `notifications` - Push notifications and announcements
+- `feedback` - User feedback and ratings
 
 **Endpoints**:
-- `/health` - Health check
-- `/dashboard` - User count statistics
-- `/locations` - GET/POST for building-room records
+- `/admin/` - Django Admin Panel (desktop-only)
+- `/api/auth/login/` - JWT token obtain
+- `/api/auth/refresh/` - JWT token refresh
+- `/api/users/` - User management (CRUD)
+- `/api/facilities/` - Facility management
+- `/api/rooms/` - Room management
+- `/api/navigation/` - Navigation nodes and edges
+- `/api/chatbot/` - FAQ and chat endpoints
+- `/api/notifications/` - Notifications
+- `/api/feedback/` - Feedback submissions
 
-**Database**: `guide_map.db`
+**Database**: `technopath.db` (SQLite) / PostgreSQL (production)
 
 **Run Command**:
 ```bash
-cd backend_dart
-dart pub get
-dart run bin/server.dart
+cd backend_django
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
 ```
 
-### 3. Flask Chatbot Backend (`chatbot_flask/`)
+### 2. Flask Chatbot Backend (`chatbot_flask/`)
 
 **Main File**: `chatbot_flask/app.py`
 
-**Purpose**: AI-powered chatbot service
+**Purpose**: AI-powered chatbot service with SEAIT campus knowledge base
 
 **Features**:
-- Rule-based response generation (extensible to AI models)
+- Rule-based response generation with keyword matching
+- Campus knowledge base (buildings, rooms, offices, facilities)
 - Chat history storage in SQLite
 - CORS enabled for cross-origin requests
+- Support for English and Tagalog queries
 
 **Endpoints**:
 - `/health` - Service health check
@@ -202,124 +228,179 @@ dart run bin/server.dart
 **Response Patterns**:
 | Input Pattern | Response |
 |--------------|----------|
-| "hello", "hi" | Greeting + help offer |
+| "hello", "hi", "kumusta" | Greeting + help offer |
 | "cl1", "cl2", etc. | Classroom location guidance |
-| "building" | Building information |
-| Default | Acknowledgment + capability list |
+| "rst", "mst", "jst" | Building information |
+| "where is", "locate", "nasaan" | Navigation guidance |
+| Default | Campus guide capabilities list |
 
 **Run Command**:
 ```bash
 cd chatbot_flask
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
 python app.py
+# Runs at http://localhost:5000
 ```
 
 ---
 
 ## Database Structure
 
-### Local SQLite Database (`DatabaseHelperV2`)
+### Main Database (Django ORM)
 
 **Tables**:
 
-1. **facilities** - Campus buildings
+1. **admin_users** - Administrator accounts
    - `id` (INTEGER PRIMARY KEY)
-   - `name` (TEXT)
-   - `description` (TEXT)
-   - `image_path` (TEXT)
+   - `username` (VARCHAR 150, UNIQUE)
+   - `password` (VARCHAR 128, hashed)
+   - `role` (VARCHAR 20) - super_admin, dean, program_head, basic_ed_head
+   - `department` (VARCHAR 50)
+   - `is_active` (BOOLEAN)
+   - `created_at` (DATETIME)
+   - `updated_at` (DATETIME)
 
-2. **rooms** - Classrooms and labs
+2. **facilities** - Campus buildings
    - `id` (INTEGER PRIMARY KEY)
-   - `facility_id` (INTEGER, FOREIGN KEY)
-   - `name` (TEXT)
+   - `name` (VARCHAR 200)
+   - `code` (VARCHAR 20, UNIQUE) - e.g., RST, MST, JST
    - `description` (TEXT)
+   - `map_svg_id` (VARCHAR 100) - SVG element reference
+   - `total_floors` (INTEGER)
+   - `is_deleted` (BOOLEAN, soft delete)
+   - `created_at` (DATETIME)
+
+3. **rooms** - Classrooms and labs
+   - `id` (INTEGER PRIMARY KEY)
+   - `facility_id` (INTEGER, FK → facilities)
+   - `name` (VARCHAR 200)
+   - `code` (VARCHAR 50)
    - `floor` (INTEGER)
+   - `map_svg_id` (VARCHAR 100)
+   - `room_type` (VARCHAR 50) - classroom, office, lab, facility, staircase, restroom, other
+   - `is_crucial` (BOOLEAN)
+   - `search_count` (INTEGER)
+   - `is_deleted` (BOOLEAN)
+   - `created_at` (DATETIME)
 
-3. **map_markers** - Map coordinates
+4. **navigation_nodes** - Waypoints for pathfinding
    - `id` (INTEGER PRIMARY KEY)
-   - `name` (TEXT)
-   - `x` (REAL) - Horizontal position (0-1)
-   - `y` (REAL) - Vertical position (0-1)
-   - `type` (TEXT) - 'facility' or 'room'
+   - `name` (VARCHAR 200)
+   - `node_type` (VARCHAR 20) - room, facility, waypoint, entrance, staircase, elevator, junction
+   - `facility_id` (INTEGER, FK → facilities)
+   - `room_id` (INTEGER, FK → rooms)
+   - `x` (FLOAT) - X coordinate
+   - `y` (FLOAT) - Y coordinate
+   - `floor` (INTEGER)
+   - `is_deleted` (BOOLEAN)
 
-4. **ratings** - User feedback
+5. **navigation_edges** - Connections between nodes
    - `id` (INTEGER PRIMARY KEY)
-   - `user_id` (INTEGER)
-   - `rating` (INTEGER)
-   - `comment` (TEXT)
-   - `created_at` (TEXT)
+   - `from_node_id` (INTEGER, FK → navigation_nodes)
+   - `to_node_id` (INTEGER, FK → navigation_nodes)
+   - `distance` (INTEGER) - Distance in meters
+   - `is_bidirectional` (BOOLEAN)
+   - `is_deleted` (BOOLEAN)
 
-5. **notifications** - Push notifications
+6. **faq_entries** - Chatbot knowledge base
    - `id` (INTEGER PRIMARY KEY)
-   - `title` (TEXT)
+   - `question` (TEXT)
+   - `answer` (TEXT)
+   - `category` (VARCHAR 50) - location, schedule, academic, services, general
+   - `keywords` (TEXT) - Comma-separated for offline matching
+   - `usage_count` (INTEGER)
+   - `is_deleted` (BOOLEAN)
+
+7. **notifications** - Push notifications
+   - `id` (INTEGER PRIMARY KEY)
+   - `title` (VARCHAR 200)
    - `message` (TEXT)
-   - `is_read` (INTEGER)
-   - `created_at` (TEXT)
+   - `type` (VARCHAR 30) - info, success, warning, error, emergency, facility_update, etc.
+   - `priority` (INTEGER) - 1=Low, 2=Medium, 3=High, 4=Urgent
+   - `is_read` (BOOLEAN)
+   - `created_at` (DATETIME)
 
-6. **chat_history** - Local chat backup
+8. **feedback** - User feedback
    - `id` (INTEGER PRIMARY KEY)
-   - `user_message` (TEXT)
-   - `bot_reply` (TEXT)
-   - `timestamp` (TEXT)
+   - `rating` (INTEGER 1-5)
+   - `comment` (TEXT)
+   - `category` (VARCHAR 30)
+   - `facility_id` (INTEGER, FK → facilities)
+   - `room_id` (INTEGER, FK → rooms)
+   - `created_at` (DATETIME)
 
-7. **app_usage** - Analytics
+9. **announcements** - Department announcements
    - `id` (INTEGER PRIMARY KEY)
-   - `user_id` (INTEGER)
-   - `session_start` (TEXT)
-   - `session_end` (TEXT)
-
-8. **users** - User accounts
-   - `id` (INTEGER PRIMARY KEY)
-   - `username` (TEXT)
-   - `password` (TEXT) - Hashed
-   - `role` (TEXT) - 'admin' or 'user'
-   - `created_at` (TEXT)
+   - `title` (VARCHAR 200)
+   - `content` (TEXT)
+   - `source_label` (VARCHAR 200)
+   - `status` (VARCHAR 20) - pending_approval, published, rejected, archived
+   - `created_at` (DATETIME)
 
 ---
 
 ## Key Features
 
 ### 1. Interactive Campus Map
-- **Image**: `assets/maps/Example1.jpg`
-- **Zoom**: 0.8x to 4.0x with pinch gestures
+- **Format**: SVG-based 2D map with zoom and pan
+- **Zoom**: 0.5x to 4.0x with pinch gestures (mobile) or buttons (desktop)
 - **Pan**: Full drag navigation
 - **Markers**: Dynamic markers for buildings and rooms
 - **Filter**: Show/hide by facility or room type
+- **Floor Selector**: Multi-floor navigation support
 
 ### 2. QR Code Navigation
-- **Scanner**: `mobile_scanner` package
+- **Scanner**: jsQR library (browser-based)
 - **Purpose**: Quick location access via QR codes
 - **Action**: Scan → Open map at specific entry point
+- **Offline**: Works offline once app is installed
 
 ### 3. AI Chatbot
 - **Backend**: Flask server (Python)
-- **Pattern Matching**: Keyword-based responses
-- **History**: SQLite storage for conversation logs
-- **Extensibility**: Ready for LLM integration
+- **Pattern Matching**: Keyword-based responses with campus knowledge base
+- **History**: IndexedDB storage for conversation logs
+- **Offline Mode**: FAQ fallback when offline
+- **Language Support**: English and Tagalog queries
 
 ### 4. Search Functionality
 - **Type**: Full-text search across all locations
 - **Scope**: Facilities, rooms, descriptions
 - **Results**: Filtered list with icons and details
+- **Recent Searches**: Cached in IndexedDB
 
 ### 5. Rating System
 - **Scale**: 1-5 stars
 - **Feedback**: Optional text comments
-- **Storage**: Local and server-side
+- **Storage**: Local (IndexedDB) and server-side sync
 - **Admin View**: Dashboard statistics
 
 ### 6. Notifications
 - **Badge**: Unread count on home screen
-- **Types**: System updates, navigation alerts
-- **Storage**: Persistent in SQLite
+- **Types**: System updates, navigation alerts, announcements
+- **Storage**: IndexedDB with server sync
+- **Priority Levels**: Low, Medium, High, Urgent, Emergency
 
-### 7. Admin Panel
-- **Authentication**: Secure login
-- **Dashboard**: User statistics, ratings, usage
-- **Management**: Edit buildings, rooms, markers
-- **Reports**: Export usage data
+### 7. Offline Navigation (Dijkstra Algorithm)
+- **Algorithm**: Dijkstra's shortest path (JavaScript implementation)
+- **Data Source**: IndexedDB (navigation_nodes, navigation_edges)
+- **Features**: Multi-floor pathfinding, real-time route calculation
+- **GPS Integration**: Web Geolocation API for current position
+
+### 8. Admin Panel (Django)
+- **Authentication**: JWT-based secure login
+- **Role-based Access**:
+  - **Safety and Security Office** — full system control
+  - **Program Head** — department rooms and announcements
+  - **Dean** — oversight and validation
+- **Dashboard**: User statistics, ratings, usage analytics
+- **Management**: Edit buildings, rooms, navigation nodes
+- **Approval Workflow**: Announcement approval system
+
+### 9. PWA Features
+- **Installable**: Add to home screen on Android/iOS
+- **Offline Support**: Full functionality without internet
+- **Background Sync**: Queue actions when offline, sync when connected
+- **Push Notifications**: Web Push API (future enhancement)
+- **Responsive**: Mobile-first design with desktop support
 
 ---
 
@@ -327,42 +408,72 @@ python app.py
 
 ```
 version4_technopath/
-├── android/                 # Android platform files
-├── ios/                     # iOS platform files
-├── lib/
-│   ├── main.dart           # Main application entry
-│   ├── api_service.dart     # HTTP client for backend
-│   ├── database_helper.dart # SQLite utilities
-│   ├── database_helper_v2.dart # Enhanced database handler
-│   ├── chatbot_database_helper.dart # Chatbot DB handler
-│   ├── feedback/
-│   │   └── feedback_screen.dart
-│   ├── map/
-│   │   ├── campus_map_screen.dart
-│   │   ├── SEAITlogo.png
-│   │   └── Example1.jpg
-│   ├── navigation/
-│   │   └── pathfinder.dart  # A* pathfinding algorithm
-│   ├── qr/
-│   │   └── qr_scanner_screen.dart
-│   └── search/
-│       └── search_delegate.dart
-├── backend/                 # Node.js backend
-│   ├── server.js
-│   ├── database.js
-│   └── database/
-│       └── guide_map.db
-├── backend_dart/            # Dart backend (alternative)
-│   └── bin/
-│       └── server.dart
-├── chatbot_flask/           # Python chatbot service
+├── backend_django/         # Django REST API
+│   ├── manage.py
+│   ├── requirements.txt
+│   ├── technopath/         # Project settings
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   └── apps/               # Django apps
+│       ├── users/
+│       ├── facilities/
+│       ├── rooms/
+│       ├── navigation/
+│       ├── chatbot/
+│       ├── notifications/
+│       └── feedback/
+├── frontend/               # Vue.js PWA
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── public/
+│   │   ├── manifest.json
+│   │   └── maps/           # SVG map files
+│   └── src/
+│       ├── main.js
+│       ├── App.vue
+│       ├── router/
+│       │   └── index.js
+│       ├── stores/         # Pinia stores
+│       │   ├── mapStore.js
+│       │   ├── chatbotStore.js
+│       │   └── syncStore.js
+│       ├── services/
+│       │   ├── api.js        # Axios HTTP client
+│       │   ├── db.js         # IndexedDB (Dexie)
+│       │   ├── geolocation.js
+│       │   └── pathfinder.js # Dijkstra algorithm
+│       ├── views/
+│       │   ├── HomeView.vue
+│       │   ├── NavigateView.vue
+│       │   ├── ChatbotView.vue
+│       │   ├── ExploreView.vue
+│       │   ├── SettingsView.vue
+│       │   └── NotificationsView.vue
+│       ├── components/
+│       │   ├── MapCanvas.vue
+│       │   ├── FloorMapSVG.vue
+│       │   ├── NavigationPanel.vue
+│       │   ├── ChatbotWidget.vue
+│       │   ├── QRScanner.vue
+│       │   └── NotificationBadge.vue
+│       └── assets/           # CSS and static assets
+│           ├── main.css
+│           ├── homeview.css
+│           ├── navigate.css
+│           └── ...
+├── chatbot_flask/          # Python chatbot service
 │   ├── app.py
+│   ├── requirements.txt
 │   └── chatbot.db
-├── assets/
-│   └── maps/               # Map images
-├── test/                   # Unit tests
-├── pubspec.yaml            # Flutter dependencies
-└── README.md
+├── assets/                 # Map images and static assets
+│   └── maps/
+├── _flutter_archive/       # Original Flutter app (reference)
+├── .windsurf/              # Windsurf IDE settings
+├── .gitignore
+├── README.md
+└── SYSTEM_DOCUMENTATION.md
 ```
 
 ---
@@ -370,126 +481,173 @@ version4_technopath/
 ## Setup & Installation
 
 ### Prerequisites
-- Flutter SDK 3.11.1+
-- Dart SDK 3.0+
-- Node.js 18+ (for backend)
-- Python 3.9+ (for chatbot)
+- Python 3.11+
+- Node.js 20+
+- Git
 
-### Frontend Setup
+### Backend Setup (Django)
 
 ```bash
-# 1. Navigate to project
-cd version4_technopath
+# 1. Navigate to backend
+cd backend_django
 
-# 2. Install Flutter dependencies
-flutter pub get
+# 2. Create virtual environment
+python -m venv venv
 
-# 3. Run the app
-flutter run
-```
+# 3. Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
-### Backend Setup
-
-**Node.js Backend**:
-```bash
-cd backend
-npm install
-npm start
-```
-
-**Flask Chatbot**:
-```bash
-cd chatbot_flask
-python -m venv .venv
-.venv\Scripts\activate  # Windows
+# 4. Install dependencies
 pip install -r requirements.txt
-python app.py
+
+# 5. Run migrations
+python manage.py migrate
+
+# 6. Create superuser (optional)
+python manage.py createsuperuser
+
+# 7. Start server
+python manage.py runserver
+# Runs at http://localhost:8000
 ```
 
-**Dart Backend** (Alternative):
+### Frontend Setup (Vue.js PWA)
+
 ```bash
-cd backend_dart
-dart pub get
-dart run bin/server.dart
+# 1. Navigate to frontend
+cd frontend
+
+# 2. Install dependencies
+npm install
+
+# 3. Start development server
+npm run dev
+# Runs at http://localhost:5173
+
+# 4. Build for production
+npm run build
+```
+
+### Chatbot Setup (Flask)
+
+```bash
+# 1. Navigate to chatbot
+cd chatbot_flask
+
+# 2. Install dependencies (use same venv or create new)
+pip install -r requirements.txt
+
+# 3. Start server
+python app.py
+# Runs at http://localhost:5000
 ```
 
 ### Platform-Specific Notes
 
-**Android**:
-- Uses `http://10.0.2.2` for localhost access
-- Update `AndroidManifest.xml` for internet permission
-
-**iOS**:
-- Update `Info.plist` for camera permissions (QR scanning)
-- Uses `http://localhost` for backend
-
-**Physical Device**:
-- Replace backend URLs with computer's LAN IP
+**Android (Chrome)**:
+- Access PWA at `http://<computer-ip>:5173`
+- Use "Add to Home Screen" for installable app experience
 - Ensure devices are on same network
+
+**iOS (Safari)**:
+- Access PWA at `http://<computer-ip>:5173`
+- Use "Share → Add to Home Screen"
+- Camera permissions for QR scanning (granted via browser)
+
+**Desktop**:
+- Chrome/Edge: Install via address bar PWA icon
+- Admin panel: http://localhost:8000/admin/
 
 ---
 
 ## API Reference
 
-### ApiService Class (`lib/api_service.dart`)
+### API Service (`frontend/src/services/api.js`)
 
-Base URL: `http://10.0.2.2:3000/api` (Android emulator)
+Base URL: `http://localhost:8000/api`
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/health` | Service status |
-| GET | `/dashboard/stats` | Dashboard data |
-| GET | `/users` | List all users |
-| POST | `/users` | Create user |
-| POST | `/users/login` | Authenticate |
-| GET | `/facilities` | List facilities |
-| POST | `/facilities` | Create facility |
-| GET | `/rooms` | List rooms |
-| GET | `/facilities/{id}/rooms` | Rooms by facility |
-| GET | `/map-markers` | All markers |
-| GET | `/ratings` | All ratings |
-| GET | `/ratings/average` | Average rating |
-| GET | `/notifications` | All notifications |
-| GET | `/notifications/unread/count` | Unread count |
-| POST | `/chat-history` | Save chat |
-| GET | `/app-usage/weekly` | Weekly stats |
-| GET | `/app-usage/active-users` | Active user count |
+| POST | `/auth/login/` | JWT token obtain |
+| POST | `/auth/refresh/` | JWT token refresh |
+| GET | `/users/` | List admin users |
+| GET | `/facilities/` | List facilities |
+| GET | `/facilities/:id/rooms/` | Rooms by facility |
+| GET | `/rooms/` | List rooms |
+| GET | `/navigation/nodes/` | Navigation nodes |
+| GET | `/navigation/edges/` | Navigation edges |
+| GET | `/chatbot/faq/` | FAQ entries |
+| GET | `/notifications/` | Notifications |
+| POST | `/feedback/` | Submit feedback |
+
+### Chatbot API
+
+Base URL: `http://localhost:5000`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Service health check |
+| POST | `/chat` | Send chat message |
+
+**Chat Request Format**:
+```json
+{
+  "message": "Where is the library?"
+}
+```
+
+**Chat Response Format**:
+```json
+{
+  "reply": "The Library is located at the ground floor of the main building, left wing. Open the Map tab to see its location on the campus layout."
+}
+```
 
 ---
 
 ## Dependencies
 
-### Flutter Dependencies (`pubspec.yaml`)
+### Frontend Dependencies (`frontend/package.json`)
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `flutter` | SDK | Core framework |
-| `cupertino_icons` | ^1.0.8 | iOS-style icons |
-| `http` | ^1.2.2 | HTTP client |
-| `sqflite` | ^2.3.2 | SQLite database |
-| `path` | ^1.9.0 | File path utilities |
-| `crypto` | ^3.0.3 | Cryptographic functions |
-| `mobile_scanner` | ^3.5.5 | QR code scanning |
-| `flutter_svg` | ^2.0.9 | SVG image support |
-| `vector_math` | ^2.1.4 | Mathematical operations |
+| `vue` | ^3.4.0 | Core framework |
+| `vue-router` | ^4.3.0 | Routing |
+| `pinia` | ^2.1.0 | State management |
+| `axios` | ^1.6.0 | HTTP client |
+| `leaflet` | ^1.9.4 | Map rendering |
+| `dexie` | ^3.2.0 | IndexedDB wrapper |
+| `fuse.js` | ^7.0.0 | Fuzzy search |
+| `jsqr` | ^1.4.0 | QR code scanning |
 
-### Python Dependencies (`chatbot_flask/requirements.txt`)
+### Dev Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `vite` | ^5.0.0 | Build tool |
+| `@vitejs/plugin-vue` | ^5.0.0 | Vue plugin for Vite |
+| `vite-plugin-pwa` | ^0.19.0 | PWA generation |
+
+### Python Dependencies (`backend_django/requirements.txt`)
 
 ```
-flask
-flask-cors
+django>=4.2
+djangorestframework>=3.15
+djangorestframework-simplejwt>=5.3
+django-cors-headers>=4.3
+python-decouple>=3.8
+Pillow>=10.0
 ```
 
-### Node.js Dependencies (`backend/package.json`)
+### Chatbot Dependencies (`chatbot_flask/requirements.txt`)
 
-```json
-{
-  "dependencies": {
-    "express": "^4.18.2",
-    "sqlite3": "^5.1.6",
-    "cors": "^2.8.5"
-  }
-}
+```
+flask>=3.0
+flask-cors>=4.0
+requests>=2.31.0
 ```
 
 ---
@@ -497,32 +655,41 @@ flask-cors
 ## Development Guidelines
 
 ### Adding New Features
-1. Update database schema in `database_helper_v2.dart`
-2. Add API endpoints in `api_service.dart`
-3. Create UI components in appropriate screen files
-4. Update navigation in `main.dart`
+1. Update models in appropriate Django app
+2. Create/update serializers and views
+3. Add API endpoints in `urls.py`
+4. Create/update Vue components in frontend
+5. Update Pinia stores if state management needed
+6. Update service worker config for offline support
 
 ### Theme Customization
-Primary color: `Color(0xFFFF9800)` (Orange)
-- Update in `ThemeData` in `main.dart`
+Primary color: `#FF9800` (Orange)
+- Update CSS variables in `frontend/src/assets/main.css`
 - Affects all UI components automatically
 
 ### Database Migrations
-1. Increment version in `database_helper_v2.dart`
-2. Add migration logic in `onUpgrade` callback
-3. Test on clean installation and upgrade paths
+1. Update models in Django app
+2. Run `python manage.py makemigrations`
+3. Run `python manage.py migrate`
+4. Test on clean installation and upgrade paths
+
+### Offline-First Development
+1. Ensure features work with IndexedDB
+2. Add sync logic in `syncStore.js`
+3. Update service worker caching strategy in `vite.config.js`
+4. Test with network throttling/offline mode
 
 ---
 
 ## Future Enhancements
 
-- **Real-time Navigation**: GPS integration for outdoor navigation
-- **Augmented Reality**: AR waypoints for indoor navigation
+- **Real-time GPS Navigation**: Enhanced outdoor navigation with live GPS tracking
+- **Web Push Notifications**: Firebase Cloud Messaging integration
+- **Multi-language Support**: Full localization for international students
+- **AR Navigation**: Augmented reality waypoints (WebXR)
 - **Voice Commands**: Speech-to-text for accessibility
-- **Multi-language Support**: Localization for international students
-- **Offline Mode**: Full functionality without internet
-- **Push Notifications**: Firebase Cloud Messaging integration
-- **Building 3D Models**: Three.js integration for web view
+- **Building 3D Models**: Three.js integration for 3D campus view
+- **Offline Map Tile Caching**: Pre-cached map tiles for offline use
 
 ---
 
@@ -530,8 +697,8 @@ Primary color: `Color(0xFFFF9800)` (Orange)
 
 For technical support or feature requests, contact the SEAIT IT Department.
 
-**Version**: 1.0.0+1  
-**Last Updated**: March 2026  
+**Version**: 4.0.0
+**Last Updated**: April 2026
 **License**: Private (SEAIT Internal Use)
 
 ---
