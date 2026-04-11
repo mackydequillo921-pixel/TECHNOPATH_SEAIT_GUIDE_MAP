@@ -16,8 +16,6 @@ const routes = [
   { path: '/favorites',    component: () => import('../views/FavoritesView.vue') },
   { path: '/feedback',     component: () => import('../views/FeedbackView.vue') },
 
-  // FIX: QR Scanner restored (was deleted instead of fixed)
-  { path: '/qr-scanner',   component: () => import('../views/QRScannerView.vue') },
 
   // Info pages
   { path: '/building-info',   component: () => import('../views/InfoView.vue'), props: { type: 'buildings' } },
