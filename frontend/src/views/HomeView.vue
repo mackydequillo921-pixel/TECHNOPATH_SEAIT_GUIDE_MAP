@@ -8,11 +8,20 @@
       @skip="onOnboardingSkip" 
     />
 
-    <!-- Unified Top Search & Filter Area -->
-    <div class="home-top-overlay">
-      <!-- Primary Search Bar -->
-      <div class="unified-search-container">
-        <div class="unified-search-input-wrapper">
+    <!-- Header Bar with Search -->
+    <header class="home-header">
+      <div class="home-header-content">
+        <div class="home-header-icon">
+          <span class="material-icons">school</span>
+        </div>
+        <div class="home-header-text">
+          <h1>TechnoPath</h1>
+          <p>SEAIT Campus Guide</p>
+        </div>
+      </div>
+      <!-- Search Bar in Header -->
+      <div class="home-header-search">
+        <div class="home-search-input-wrapper">
           <span class="material-icons search-icon">search</span>
           <input
             v-model="searchText"
@@ -20,15 +29,20 @@
             placeholder="Search locations, facilities..."
             @keyup.enter="performSearch"
             @input="debouncedSearch"
-            class="unified-search-input"
+            class="home-search-input"
           />
           <button v-if="searchText" class="clear-btn" @click="searchText = ''">
             <span class="material-icons">close</span>
           </button>
         </div>
+      </div>
+    </header>
 
-        <!-- Search Autocomplete Suggestions -->
-        <div v-if="searchSuggestions.length > 0 && searchText" class="search-suggestions unified-suggestions">
+    <!-- Unified Top Search & Filter Area -->
+    <div class="home-top-overlay">
+      <!-- Search Suggestions Dropdown -->
+      <div class="home-suggestions-overlay" v-if="searchSuggestions.length > 0 && searchText">
+        <div class="search-suggestions unified-suggestions">
           <div
             v-for="suggestion in searchSuggestions.slice(0, 6)"
             :key="suggestion.name"
@@ -36,7 +50,7 @@
             @click="selectSuggestion(suggestion)"
           >
             <span class="material-icons">
-              {{ suggestion.type === 'Facility' ? 'business' : 'meeting_room' }}
+              {{ suggestion.icon || 'place' }}
             </span>
             <div class="suggestion-info">
               <span class="suggestion-name">{{ suggestion.name }}</span>
@@ -45,149 +59,113 @@
           </div>
         </div>
       </div>
-
-      <!-- Scrollable Filter Chips -->
-      <div class="filter-chips-container">
-        <button 
-          class="filter-chip" 
-          :class="{ active: !selectedFacility && !selectedRoom }"
-          @click="clearFilters"
-        >
-          All
-        </button>
-        <button 
-          v-for="facility in facilities"
-          :key="facility.id"
-          class="filter-chip"
-          :class="{ active: selectedFacility === facility.name }"
-          @click="selectFacility(facility.name)"
-        >
-          {{ facility.name }}
-        </button>
-      </div>
     </div>
 
-    <!-- Map container with markers -->
-    <div class="map-wrapper">
-      <div 
-        class="map-container"
-        ref="mapContainer"
-        @wheel.prevent="handleZoom"
-        @mousedown="startPan"
-        @mousemove="handlePan"
-        @mouseup="endPan"
-        @mouseleave="endPan"
-        @touchstart="startTouchPan"
-        @touchmove="handleTouchPan"
-        @touchend="endPan"
-      >
-        <div 
-          class="map-content"
-          :style="mapTransformStyle"
-        >
-          <!-- SEAIT Campus Map SVG -->
-          <div class="seait-map-wrapper">
-            <img 
-              src="../assets/SEAIT_Map.svg" 
-              class="seait-map-image"
-              alt="SEAIT Campus Map"
-              draggable="false"
-            />
-          </div>
-          
-          <!-- Map markers overlay -->
-          <div
-            v-for="marker in filteredMarkers"
-            :key="marker.id"
-            class="map-marker"
-            :style="getMarkerStyle(marker)"
-            @click.stop="showMarkerInfo(marker)"
+    <!-- SEAIT Information Section -->
+    <div class="seait-info-section">
+      <div class="seait-header">
+        <h1 class="seait-title">SEAIT</h1>
+        <p class="seait-subtitle">South East Asian Institute of Technology</p>
+      </div>
+
+      <div class="seait-highlights">
+        <div class="highlight-card">
+          <span class="material-icons highlight-icon">school</span>
+          <h3>Quality Education</h3>
+          <p>Providing excellent technical and vocational education since establishment</p>
+        </div>
+
+        <div class="highlight-card">
+          <span class="material-icons highlight-icon">engineering</span>
+          <h3>Modern Facilities</h3>
+          <p>State-of-the-art classrooms, laboratories, and workshop areas</p>
+        </div>
+
+        <div class="highlight-card">
+          <span class="material-icons highlight-icon">location_on</span>
+          <h3>Strategic Location</h3>
+          <p>Conveniently located in the heart of the community with easy access</p>
+        </div>
+
+        <div class="highlight-card">
+          <span class="material-icons highlight-icon">groups</span>
+          <h3>Expert Faculty</h3>
+          <p>Dedicated instructors and staff committed to student success</p>
+        </div>
+      </div>
+
+      <!-- Interactive Campus Map -->
+      <div class="seait-map-section">
+        <h2 class="seait-map-title">Interactive Campus Map</h2>
+        <div class="map-wrapper seait-embedded-map">
+          <div class="map-container"
+            ref="mapContainer"
+            @wheel.prevent="handleZoom"
+            @mousedown="startPan"
+            @mousemove="handlePan"
+            @mouseup="endPan"
+
+            @mouseleave="endPan"
+            @touchstart="startTouchPan"
+            @touchmove="handleTouchPan"
+            @touchend="endPan"
           >
-            <div class="marker-icon">
-              <span class="material-icons">
-                {{ marker.marker_type === 'facility' ? 'business' : 'meeting_room' }}
-              </span>
+            <div class="map-content"
+              :style="mapTransformStyle"
+            >
+              <div class="campus-map-wrapper">
+                <img src="../assets/Map_labeled.svg" class="campus-map-image" alt="Campus Map" draggable="false"/>
+              </div>
             </div>
-            <div class="marker-label">{{ marker.name }}</div>
           </div>
         </div>
       </div>
 
-      <!-- Zoom controls -->
-      <div class="zoom-controls">
-        <button @click="zoomIn" class="zoom-btn" title="Zoom In">+</button>
-        <button @click="zoomOut" class="zoom-btn" title="Zoom Out">−</button>
-      </div>
-
-      <!-- Marker Info Popup -->
-      <div v-if="isMarkerInfoVisible && selectedMarker" class="marker-info-popup" @click.stop>
-        <div class="marker-info-header">
-          <div class="marker-info-icon" :class="selectedMarker.marker_type">
-            <span class="material-icons">
-              {{ selectedMarker.marker_type === 'facility' ? 'business' : 'meeting_room' }}
-            </span>
+      <!-- Campus Image Gallery -->
+      <div class="seait-gallery">
+        <h2 class="gallery-title">Campus Gallery</h2>
+        <div class="gallery-grid">
+          <div class="gallery-item">
+            <img src="../assets/campus-1.jpg" alt="SEAIT Campus Aerial View 1" />
           </div>
-          <div class="marker-info-text">
-            <h3>{{ selectedMarker.name }}</h3>
-            <span class="marker-info-type">{{ selectedMarker.marker_type }}</span>
+          <div class="gallery-item">
+            <img src="../assets/campus-2.jpg" alt="SEAIT Campus Aerial View 2" />
           </div>
-          <button class="marker-info-close" @click="closeMarkerInfo">
-            <span class="material-icons">close</span>
-          </button>
-        </div>
-        <div class="marker-info-actions">
-          <button class="marker-info-btn marker-info-btn-favorite" @click="addToFavorites">
-            <span class="material-icons">favorite</span>
-            Add to Favorites
-          </button>
-          <button class="marker-info-btn marker-info-btn-navigate" @click="navigateToMarker">
-            <span class="material-icons">directions</span>
-            Navigate
-          </button>
+          <div class="gallery-item">
+            <img src="../assets/campus-3.jpg" alt="SEAIT Campus Aerial View 3" />
+          </div>
+          <div class="gallery-item">
+            <img src="../assets/campus-4.jpg" alt="SEAIT Campus Aerial View 4" />
+          </div>
+          <div class="gallery-item gallery-item-wide">
+            <img src="../assets/campus-5.jpg" alt="SEAIT Campus Panoramic View" />
+          </div>
         </div>
       </div>
 
-          <!-- Removed desktop-search and suggestions as they are unified at the top -->
-
-      <!-- Desktop Location Button -->
-      <button 
-        class="desktop-location-btn" 
-        @click="showLocateDialog"
-        :class="{ active: currentLocation }"
-        title="Set Current Location"
-      >
-        <span class="material-icons">location_on</span>
-      </button>
     </div>
 
     <!-- Bottom controls - MOBILE ONLY -->
     <div class="bottom-controls mobile-only">
+      <!-- Desktop Floating Action Buttons -->
+      <div class="desktop-fab-container">
+        <button class="desktop-fab-btn desktop-notification-btn" @click="goToNotifications" title="Notifications">
+          <span class="material-icons">notifications</span>
+          <span v-if="notificationCount > 0" class="notification-badge">{{ notificationCount > 99 ? '99+' : notificationCount }}</span>
+        </button>
+        <button class="desktop-fab-btn desktop-ratings-btn" @click="openRateApp" title="Ratings & Feedback">
+          <span class="material-icons">star</span>
+        </button>
+        <button class="desktop-fab-btn desktop-chatbot-btn" @click="goToChatbot" title="Chatbot">
+          <span class="material-icons">smart_toy</span>
+        </button>
+      </div>
+
       <!-- Menu and action buttons -->
       <div class="action-row">
         <button class="menu-btn" @click="showMenu = true">
           <span class="material-icons">menu</span>
         </button>
-        
-        <div class="action-buttons">
-          <button 
-            class="action-btn"
-            :class="{ active: currentLocation }"
-            @click="showLocateDialog"
-          >
-            <span class="material-icons">location_on</span>
-          </button>
-          
-          <button class="action-btn notification-btn" @click="goToNotifications">
-            <span class="material-icons">notifications</span>
-            <span v-if="unreadNotifications > 0" class="badge">
-              {{ unreadNotifications }}
-            </span>
-          </button>
-          
-          <button class="action-btn" @click="goToChatbot">
-            <span class="material-icons">smart_toy</span>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -210,6 +188,13 @@
               <span class="material-icons">meeting_room</span>
             </div>
             <span>Rooms Info</span>
+          </div>
+          <div class="menu-divider"></div>
+          <div class="menu-item" @click="openRateApp">
+            <div class="menu-item-icon">
+              <span class="material-icons">star</span>
+            </div>
+            <span>Rate App</span>
           </div>
         </div>
         <div class="menu-sheet-footer">
@@ -297,6 +282,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import offlineData from '../services/offlineData.js'
 import { useSyncStore } from '../stores/syncStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { showToast } from '../services/toast.js'
 import OnboardingTutorial from '../components/OnboardingTutorial.vue'
 import { isOnline } from '../services/sync.js'
@@ -306,11 +292,15 @@ import useMapPanZoom from '../composables/useMapPanZoom.js'
 const router = useRouter()
 const route = useRoute()
 const syncStore = useSyncStore()
+const authStore = useAuthStore()
 
 // Data
 const facilities = ref([])
 const rooms = ref([])
-const mapMarkers = ref([])
+const instructors = ref([])
+const employees = ref([])
+const departments = ref([])
+// const mapMarkers = ref([]) // Disabled - markers removed from map
 const selectedFacility = ref('')
 const selectedRoom = ref('')
 const isFacilitiesExpanded = ref(false)
@@ -333,412 +323,948 @@ const isMarkerInfoVisible = ref(false)
 
 // Map zoom and pan — use shared composable
 const mapContainer = ref(null)
+
 const {
+
   scale, translateX, translateY,
+
   transformStyle: mapTransformStyle,
+
   zoomIn, zoomOut,
+
   onPointerDown: startPan,
+
   onPointerMove: handlePan,
+
   onPointerUp: endPan,
+
   onWheel: handleZoom,
+
   onTouchStart: startTouchPan,
+
   onTouchMove: handleTouchPan,
+
   initTransform
+
 } = useMapPanZoom()
 
-// Filtered markers based on selection
-const filteredMarkers = computed(() => {
-  if (!selectedFacility.value && !selectedRoom.value) {
-    return mapMarkers.value
-  }
-  return mapMarkers.value.filter(marker => {
-    if (selectedFacility.value && marker.marker_type === 'facility') {
-      return marker.name === selectedFacility.value
-    }
-    if (selectedRoom.value && marker.marker_type === 'room') {
-      return marker.name === selectedRoom.value
-    }
-    return false
-  })
-})
+
+
+// Filtered markers - DISABLED (markers removed from map view)
+
+// const filteredMarkers = computed(() => {
+
+//   if (!selectedFacility.value && !selectedRoom.value) {
+
+//     return mapMarkers.value
+
+//   }
+
+//   return mapMarkers.value.filter(marker => {
+
+//     if (selectedFacility.value && marker.marker_type === 'facility') {
+
+//       return marker.name === selectedFacility.value
+
+//     }
+
+//     if (selectedRoom.value && marker.marker_type === 'room') {
+
+//       return marker.name === selectedRoom.value
+
+//     }
+
+//     return true
+
+//   })
+
+// })
+
+
 
 // Methods
+
 const loadData = async () => {
+
   try {
+
     // Use offline-aware data service
-    const [facilitiesRes, roomsRes, markerRes] = await Promise.all([
+
+    const [facilitiesRes, roomsRes] = await Promise.all([
+
       offlineData.getFacilities(),
-      offlineData.getRooms(),
-      offlineData.getMapMarkers()
+
+      offlineData.getRooms()
+
+      // offlineData.getMapMarkers() // Disabled - markers removed
+
     ])
+
     
+
     facilities.value = facilitiesRes.data
+
     rooms.value = roomsRes.data
-    mapMarkers.value = markerRes.data
+
+    // mapMarkers.value = markerRes.data // Disabled - markers removed
+
     
+
+    // Load additional data for global search
+
+    await loadAdditionalSearchData()
+
+    
+
     // Log data source for debugging
-    console.log(`[HomeView] Data loaded - Facilities: ${facilitiesRes.source}, Rooms: ${roomsRes.source}, Markers: ${markerRes.source}`)
+
+    console.log(`[HomeView] Data loaded - Facilities: ${facilitiesRes.source}, Rooms: ${roomsRes.source}`)
+
     
+
     // If any data came from cache and is stale, show a subtle notification
-    if (facilitiesRes.stale || roomsRes.stale || markerRes.stale) {
+
+    if (facilitiesRes.stale || roomsRes.stale) {
+
       console.log('[HomeView] Using cached data - will sync when connection is available')
+
     }
+
     
+
     // Try to load search history from API if online
+
     if (isOnline()) {
+
       try {
+
         const searchRes = await api.get('/core/search-history/')
+
         recentSearches.value = searchRes.data.slice(0, 10)
+
       } catch {
+
         // Silently fail for search history
+
       }
+
     }
+
   } catch (error) {
+
     console.error('Error loading data:', error)
+
     // Final fallback mock data
+
     useFallbackData()
+
   }
+
 }
+
+
 
 const useFallbackData = () => {
+
   facilities.value = [
-    { id: 1, name: 'MST Building', description: 'Main Science and Technology Building' },
-    { id: 2, name: 'JST Building', description: 'Junior Science and Technology Building' },
-    { id: 3, name: 'RST Building', description: 'Research Science and Technology Building' },
-    { id: 4, name: 'Library', description: 'Main Campus Library' },
-    { id: 5, name: 'Gymnasium', description: 'School Sports and Recreation Center' },
-    { id: 6, name: 'Cafeteria', description: 'Main Campus Dining Hall' },
-    { id: 7, name: 'Registrar Office', description: 'Student Services and Records' },
+
+    { id: 1, name: 'Library', description: 'Main Campus Library' },
+
+    { id: 2, name: 'Gymnasium', description: 'School Sports and Recreation Center' },
+
+    { id: 3, name: 'Cafeteria', description: 'Main Campus Dining Hall' },
+
+    { id: 4, name: 'Registrar Office', description: 'Student Services and Records' },
+
+    { id: 5, name: 'CL1', description: 'Classroom Building 1' },
+
   ]
-  rooms.value = [
-    { id: 1, name: 'CL1', description: 'Computer Lab 1', facility: 'MST Building' },
-    { id: 2, name: 'CL2', description: 'Computer Lab 2', facility: 'MST Building' },
-    { id: 3, name: 'CL5', description: 'Computer Lab 5', facility: 'MST Building' },
-    { id: 4, name: 'CL6', description: 'Computer Lab 6', facility: 'MST Building' },
-    { id: 5, name: 'Registrar', description: 'Registrar Office', facility: 'RST Building' },
-    { id: 6, name: 'IT Office', description: 'IT Office', facility: 'RST Building' },
-    { id: 7, name: 'JST101', description: 'Lecture Room', facility: 'JST Building' },
-    { id: 8, name: 'JST201', description: 'Laboratory', facility: 'JST Building' },
-  ]
-  mapMarkers.value = [
-    { id: 1, name: 'MST Building', marker_type: 'facility', x_position: 0.3, y_position: 0.4 },
-    { id: 2, name: 'JST Building', marker_type: 'facility', x_position: 0.6, y_position: 0.3 },
-    { id: 3, name: 'RST Building', marker_type: 'facility', x_position: 0.5, y_position: 0.6 },
-    { id: 4, name: 'Library', marker_type: 'facility', x_position: 0.2, y_position: 0.5 },
-    { id: 5, name: 'CL1', marker_type: 'room', x_position: 0.32, y_position: 0.42 },
-  ]
+
+  rooms.value = []
+
+  // mapMarkers disabled - markers removed from map
+
+  // mapMarkers.value = [
+
+  //   { id: 1, name: 'Library', marker_type: 'facility', x_position: 0.2, y_position: 0.5 },
+
+  //   { id: 2, name: 'Registrar Office', marker_type: 'facility', x_position: 0.7, y_position: 0.5 },
+
+  //   { id: 3, name: 'Cafeteria', marker_type: 'facility', x_position: 0.8, y_position: 0.7 },
+
+  //   { id: 4, name: 'Gymnasium', marker_type: 'facility', x_position: 0.15, y_position: 0.8 },
+
+  //   { id: 5, name: 'CL1', marker_type: 'facility', x_position: 0.5, y_position: 0.6 },
+
+  // ]
+
 }
+
+
 
 const getMarkerStyle = (marker) => ({
+
   left: `${marker.x_position * 100}%`,
+
   top: `${marker.y_position * 100}%`,
+
   color: marker.marker_type === 'facility' ? '#FF9800' : '#4CAF50'
+
 })
+
+
 
 const handleDeepLink = () => {
+
   const source = route.query.source
+
   const location = route.query.location
+
   const welcome = route.query.welcome
+
   
+
   // Handle welcome parameter for first-time visitors
+
   if (welcome === 'true') {
+
     showToast('Welcome to SEAIT Campus! Use the map to find your way around.', 'success', 5000)
+
     // Default to first facility
+
     if (facilities.value.length > 0 && !selectedFacility.value) {
+
       selectedFacility.value = facilities.value[0].name
+
     }
+
     return
+
   }
+
   
+
   // Default facility and room selection
+
   if (facilities.value.length > 0 && !selectedFacility.value) selectedFacility.value = facilities.value[0].name
+
   if (rooms.value.length > 0 && !selectedRoom.value) selectedRoom.value = rooms.value[0].name
+
 }
+
+
 
 watch(() => route.query, () => {
+
   handleDeepLink()
+
 })
+
+
 
 const loadNotificationCount = async () => {
+
   try {
+
     const res = await api.get('/notifications/')
+
     unreadNotifications.value = res.data.filter(n => !n.is_read).length
+
   } catch (error) {
+
     console.error('Error loading notifications:', error)
+
   }
+
 }
+
+
 
 const toggleFacilities = () => {
+
   isFacilitiesExpanded.value = !isFacilitiesExpanded.value
+
   if (isFacilitiesExpanded.value) isRoomsExpanded.value = false
+
 }
+
+
 
 const toggleRooms = () => {
+
   isRoomsExpanded.value = !isRoomsExpanded.value
+
   if (isRoomsExpanded.value) isFacilitiesExpanded.value = false
+
 }
+
+
 
 // Filtered rooms based on selected facility
+
 const filteredRooms = computed(() => {
+
   if (!selectedFacility.value) {
+
     return rooms.value
+
   }
+
   return rooms.value.filter(room => {
+
     // Support both facility name and facility_id matching
+
     const roomFacility = room.facility || room.facility_name
+
     const roomFacilityId = room.facility_id
+
     
+
     // Check if room belongs to selected facility by name
+
     if (roomFacility === selectedFacility.value) return true
+
     
+
     // Check if room belongs by facility_id - find facility ID
+
     const facility = facilities.value.find(f => f.name === selectedFacility.value)
+
     if (facility && roomFacilityId === facility.id) return true
+
     
+
     return false
+
   })
+
 })
 
+
+
 const selectFacility = (name) => {
+
   selectedFacility.value = name
+
   isFacilitiesExpanded.value = false
+
   // Reset room selection if current room is not in this facility
+
   if (selectedRoom.value) {
+
     const roomInFacility = filteredRooms.value.find(r => r.name === selectedRoom.value)
+
     if (!roomInFacility) {
+
       selectedRoom.value = ''
+
     }
+
   }
+
 }
 
-const selectRoom = (name) => {
-  selectedRoom.value = name
-  isRoomsExpanded.value = false
-  // Auto-select the parent facility
-  const room = rooms.value.find(r => r.name === name)
-  if (room && room.facility) {
-    selectedFacility.value = room.facility
-  }
+
+
+const clearFilters = () => {
+
+  selectedFacility.value = ''
+
+  selectedRoom.value = ''
+
 }
+
+
+
+const selectRoom = (name) => {
+
+  selectedRoom.value = name
+
+  isRoomsExpanded.value = false
+
+  // Auto-select the parent facility
+
+  const room = rooms.value.find(r => r.name === name)
+
+  if (room && room.facility) {
+
+    selectedFacility.value = room.facility
+
+  }
+
+}
+
 
 
 const showMarkerInfo = (marker) => {
+
   selectedMarker.value = marker
+
   isMarkerInfoVisible.value = true
+
 }
+
+
 
 const closeMarkerInfo = () => {
+
   isMarkerInfoVisible.value = false
+
   selectedMarker.value = null
+
 }
+
+
 
 const addToFavorites = () => {
+
   if (!selectedMarker.value) return
+
   
+
   const marker = selectedMarker.value
+
   const favorites = JSON.parse(localStorage.getItem('tp_favorites') || '[]')
+
   
+
   // Generate composite key to prevent ID collisions between views
+
   const compositeId = `${marker.marker_type}_${marker.id || marker.name}`
+
   
+
   // Check if already in favorites using composite ID
+
   if (favorites.some(f => f.id === compositeId)) {
+
     showToast('This location is already in your favorites!', 'info')
+
     return
+
   }
+
   
+
   // Add to favorites with composite ID
+
   favorites.push({
+
     id: compositeId,
+
     name: marker.name,
+
     type: marker.marker_type,
+
     description: marker.description || marker.marker_type,
+
     addedAt: new Date().toISOString()
+
   })
+
   
+
   localStorage.setItem('tp_favorites', JSON.stringify(favorites))
+
   showToast(`${marker.name} added to favorites!`, 'success')
+
 }
+
+
 
 const navigateToMarker = () => {
+
   if (!selectedMarker.value) return
-  
-  // Store destination for navigation
-  sessionStorage.setItem('tp_navigate_to', JSON.stringify({
-    id: selectedMarker.value.id,
-    name: selectedMarker.value.name
-  }))
-  
+
+  router.push({
+
+    path: '/navigate',
+
+    query: { to: selectedMarker.value.name }
+
+  })
+
   closeMarkerInfo()
-  router.push('/navigate')
+
 }
+
+
 
 const showLocateDialog = () => {
+
   locateInput.value = currentLocation.value
+
   showLocate.value = true
+
 }
+
+
 
 const setLocation = () => {
+
   currentLocation.value = locateInput.value
+
   showLocate.value = false
+
 }
+
+
 
 const showRatingDialog = () => {
+
   rating.value = 5
+
   ratingComment.value = ''
+
   showRating.value = true
+
 }
+
+
 
 const submitRating = async () => {
+
   try {
+
     await api.post('/core/ratings/', {
+
       rating: rating.value,
+
       comment: ratingComment.value,
+
       category: 'app'
+
     })
+
     showRating.value = false
+
     showToast('Thank you for your rating!', 'success')
+
   } catch (error) {
+
     console.error('Error submitting rating:', error)
+
   }
+
 }
+
+
 
 // Search suggestions with debouncing
+
 const updateSearchSuggestions = () => {
+
   if (!searchText.value) {
+
     searchSuggestions.value = []
+
     return
+
   }
+
   
+
   const query = searchText.value.toLowerCase()
-  const allLocations = [
-    ...facilities.value.map(f => ({ name: f.name, type: 'Facility', info: f.description || 'Campus facility' })),
-    ...rooms.value.map(r => ({ name: r.name, type: 'Room', info: r.description || 'Classroom/Lab' }))
+
+  const allItems = [
+
+    ...facilities.value.map(f => ({ name: f.name, type: 'Facility', info: f.description || 'Campus facility', icon: 'business' })),
+
+    ...rooms.value.map(r => ({ name: r.name, type: 'Room', info: r.description || 'Classroom/Lab', icon: 'meeting_room' })),
+
+    ...instructors.value.map(i => ({ name: i.name, type: 'Instructor', info: i.department || 'Faculty', icon: 'school' })),
+
+    ...employees.value.map(e => ({ name: e.name, type: 'Employee', info: e.department || 'Staff', icon: 'person' })),
+
+    ...departments.value.map(d => ({ name: d.name || d.code, type: 'Department', info: 'Academic Department', icon: 'account_balance' }))
+
   ]
+
   
-  searchSuggestions.value = allLocations.filter(loc => {
-    return loc.name.toLowerCase().includes(query) || 
-           loc.info.toLowerCase().includes(query)
-  })
+
+  searchSuggestions.value = allItems.filter(item => {
+
+    return item.name.toLowerCase().includes(query) || 
+
+           item.info.toLowerCase().includes(query)
+
+  }).slice(0, 8)
+
 }
+
+
 
 const debouncedSearch = () => {
+
   clearTimeout(searchDebounceTimer)
+
   searchDebounceTimer = setTimeout(updateSearchSuggestions, 200) // 200ms debounce
+
 }
+
+
 
 const selectSuggestion = (suggestion) => {
+
   searchText.value = suggestion.name
+
   searchSuggestions.value = []
-  performSearch()
+
+  // Navigate based on item type
+
+  switch (suggestion.type) {
+
+    case 'Facility':
+
+      router.push(`/info/buildings`)
+
+      break
+
+    case 'Room':
+
+      router.push(`/info/rooms`)
+
+      break
+
+    case 'Instructor':
+
+      router.push(`/instructor-info`)
+
+      break
+
+    case 'Employee':
+
+      router.push('/employees')
+
+      break
+
+    case 'Department':
+
+      router.push('/info/departments')
+
+      break
+
+    default:
+
+      performSearch()
+
+  }
+
 }
+
+
 
 const performSearch = async () => {
+
   if (!searchText.value) return
+
   
+
   const query = searchText.value.toLowerCase()
-  const allLocations = [
+
+  const allItems = [
+
     ...facilities.value.map(f => ({ name: f.name, type: 'Facility', info: f.description || 'Campus facility' })),
-    ...rooms.value.map(r => ({ name: r.name, type: 'Room', info: r.description || 'Classroom/Lab' }))
+
+    ...rooms.value.map(r => ({ name: r.name, type: 'Room', info: r.description || 'Classroom/Lab' })),
+
+    ...instructors.value.map(i => ({ name: i.name, type: 'Instructor', info: i.department || 'Faculty' })),
+
+    ...employees.value.map(e => ({ name: e.name, type: 'Employee', info: e.department || 'Staff' })),
+
+    ...departments.value.map(d => ({ name: d.name || d.code, type: 'Department', info: 'Academic Department' }))
+
   ]
+
   
-  searchResults.value = allLocations.filter(loc => {
-    return loc.name.toLowerCase().includes(query) || 
-           loc.info.toLowerCase().includes(query)
+
+  searchResults.value = allItems.filter(item => {
+
+    return item.name.toLowerCase().includes(query) || 
+
+           item.info.toLowerCase().includes(query)
+
   })
+
   
+
   // Save search to history if results found
+
   if (searchResults.value.length > 0) {
+
     try {
+
       await api.post('/core/search-history/', {
+
         query: searchText.value,
+
         results_count: searchResults.value.length,
+
         was_clicked: false
+
       })
+
       // Refresh recent searches
+
       const res = await api.get('/core/search-history/')
+
       recentSearches.value = res.data.slice(0, 10)
+
     } catch (error) {
+
       console.log('Failed to save search history')
+
     }
+
   }
+
   
+
   if (searchResults.value.length === 0) {
+
     showToast(`No locations found for "${searchText.value}"`, 'warning')
+
   }
+
 }
+
+
 
 const selectRecentSearch = (query) => {
+
   searchText.value = query
+
   performSearch()
+
 }
+
+
 
 const clearRecentSearches = async () => {
+
   try {
+
     // Delete each search history entry
+
     await Promise.all(recentSearches.value.map(search => 
+
       api.delete(`/core/search-history/${search.id}/`).catch(() => {})
+
     ))
+
     recentSearches.value = []
+
   } catch (error) {
+
     console.error('Error clearing search history:', error)
+
     recentSearches.value = []
+
   }
+
 }
 
+
+
 const selectSearchResult = (result) => {
+
   if (result.type === 'Facility') {
+
     selectedFacility.value = result.name
+
   } else {
+
     selectedRoom.value = result.name
+
   }
+
   searchResults.value = []
+
   searchText.value = ''
+
+}
+
+
+
+// Load additional search data (instructors, employees, departments)
+const loadAdditionalSearchData = async () => {
+  try {
+    // Fetch instructors from directory (public endpoint)
+    const instructorsRes = await api.get('/users/directory/?role=instructor').catch(() => ({ data: [] }))
+    instructors.value = instructorsRes.data || []
+    
+    // Fetch employees from directory (public endpoint)
+    const employeesRes = await api.get('/users/directory/?role=staff').catch(() => ({ data: [] }))
+    employees.value = employeesRes.data || []
+    
+    // Fetch departments
+    const departmentsRes = await api.get('/core/departments/').catch(() => ({ data: [] }))
+    departments.value = departmentsRes.data || []
+    
+    console.log(`[HomeView] Additional data loaded - Instructors: ${instructors.value.length}, Employees: ${employees.value.length}, Departments: ${departments.value.length}`)
+  } catch (error) {
+    console.log('[HomeView] Failed to load additional search data:', error)
+  }
 }
 
 // Navigation
+
 const goToNotifications = () => router.push('/notifications')
+
 const goToChatbot = () => router.push('/chatbot')
+
 const goToBuildingInfo = () => { showMenu.value = false; router.push('/building-info') }
+
 const goToRoomsInfo = () => { showMenu.value = false; router.push('/rooms-info') }
+
 const goToInstructorInfo = () => { showMenu.value = false; router.push('/instructor-info') }
+
 const goToEmployees = () => { showMenu.value = false; router.push('/employees') }
 
+const goToAdmin = () => { showMenu.value = false; router.push('/admin') }
+
+const goToNavGraph = () => { showMenu.value = false; router.push({ path: '/admin', query: { section: 'navigation' } }) }
+
+const openRateApp = () => { showMenu.value = false; showRating.value = true }
+
+
+
 const onboardingRef = ref(null)
+
 const showOnboarding = ref(false)
 
+
+
 const onOnboardingComplete = () => {
+
   localStorage.setItem('tp_onboarding_completed', 'true')
+
   localStorage.setItem('tp_onboarding_completed_at', Date.now().toString())
+
   showOnboarding.value = false
+
 }
+
+
 
 const onOnboardingSkip = () => {
+
   localStorage.setItem('tp_onboarding_completed', 'true')
+
   localStorage.setItem('tp_onboarding_completed_at', Date.now().toString())
+
   showOnboarding.value = false
+
 }
 
+
+
 // Lifecycle
+
 onMounted(async () => {
+
   await loadData()
+
   handleDeepLink()
+
   loadNotificationCount()
+
   if (!syncStore.lastSyncedAt) {
+
     syncStore.sync()
+
   }
+
   // Note: Removed 5-second aggressive polling
+
   // sync.js handles periodic sync (30s interval) which includes notifications
+
   
+
   // Check if onboarding should be shown (only first time)
+
   const onboardingCompleted = localStorage.getItem('tp_onboarding_completed')
+
   if (!onboardingCompleted) {
+
     showOnboarding.value = true
+
   }
+
 })
+
 </script>
 
+
+
 <style>
+
 /* Styles moved to external file: src/assets/homeview.css */
+
 @import '../assets/homeview.css';
+
+/* Desktop Floating Action Buttons - Aligned to the right */
+.desktop-fab-container {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 12px;
+  z-index: 100;
+}
+
+.desktop-notification-btn,
+.desktop-chatbot-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1a2b3c;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.desktop-notification-btn:hover,
+.desktop-chatbot-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.desktop-notification-btn .material-icons,
+.desktop-chatbot-btn .material-icons {
+  font-size: 24px;
+  color: white;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff4444;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 768px) {
+  .desktop-fab-container {
+    bottom: 20px;
+    right: 20px;
+    left: auto;
+  }
+}
+
 </style>
+

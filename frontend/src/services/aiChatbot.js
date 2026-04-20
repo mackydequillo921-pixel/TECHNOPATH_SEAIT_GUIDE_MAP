@@ -37,9 +37,9 @@ export async function initChatHistory() {
   } catch { /* silent fail — start fresh */ }
 }
 
-async function saveToHistory(mode, message) {
+async function saveToHistory(mode, message, source = '') {
   try {
-    await db.ai_chat_logs.add({ mode, message, created_at: new Date().toISOString() })
+    await db.ai_chat_logs.add({ mode, message, source, created_at: new Date().toISOString() })
   } catch { /* silent fail */ }
 }
 
@@ -104,7 +104,7 @@ export async function sendMessage(userMessage) {
   if (!userMessage?.trim()) throw new Error('Message is required')
 
   conversationHistory.push({ role: 'user', content: userMessage })
-  await saveToHistory('user', userMessage)
+  await saveToHistory('user', userMessage, 'user')
 
   let response
   let source = 'flask'
@@ -123,7 +123,7 @@ export async function sendMessage(userMessage) {
   }
 
   conversationHistory.push({ role: 'assistant', content: response })
-  await saveToHistory('assistant', response)
+  await saveToHistory('assistant', response, source)
 
   if (conversationHistory.length > MAX_HISTORY * 2) {
     conversationHistory.splice(0, conversationHistory.length - MAX_HISTORY * 2)

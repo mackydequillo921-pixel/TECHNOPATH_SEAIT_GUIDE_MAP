@@ -2,14 +2,10 @@
   <div class="adminfacilities-section">
     <!-- Header -->
     <div class="section-header">
-      <div>
+      <div class="header-title">
         <h1>Facilities Management</h1>
         <p class="subtitle">Manage campus buildings and facilities</p>
       </div>
-      <button class="btn-primary" @click="showCreateModal = true">
-        <span class="material-icons">add_business</span>
-        Add Facility
-      </button>
     </div>
 
     <!-- Stats -->
@@ -48,6 +44,12 @@
         <option value="service">Service Facility</option>
       </select>
     </div>
+
+    <!-- Add Facility Button -->
+    <button class="btn-primary btn-add-inline" @click="showCreateModal = true">
+      <span class="material-icons">add_business</span>
+      Add Facility
+    </button>
 
     <!-- Facilities Grid -->
     <div class="facilities-grid">
@@ -102,24 +104,34 @@
           </button>
         </div>
         <div class="modal-body">
+          <div class="form-group" :class="{ 'field-changed': isFieldChanged('name') }">
+            <label>
+              Name
+              <span v-if="isFieldChanged('name')" class="changed-badge">edited</span>
+            </label>
+            <input v-model="form.name" type="text" placeholder="Enter facility name" required>
+          </div>
           <div class="form-group">
-            <label>Facility Name</label>
-            <input v-model="form.name" type="text" placeholder="Enter facility name" />
+            <label>Room</label>
+            <input v-model="form.room" type="text" placeholder="e.g., CL6, Room 101" />
           </div>
           <div class="form-row">
-            <div class="form-group">
-              <label>Code</label>
-              <input v-model="form.code" type="text" placeholder="e.g., BUILD-A" />
+            <div class="form-group" :class="{ 'field-changed': isFieldChanged('code') }">
+              <label>
+                Code
+                <span v-if="isFieldChanged('code')" class="changed-badge">edited</span>
+              </label>
+              <input v-model="form.code" type="text" placeholder="Enter facility code (e.g., BLD-01)" required>
             </div>
-            <div class="form-group">
-              <label>Type</label>
-              <select v-model="form.facility_type">
-                <option value="academic">Academic Building</option>
+            <div class="form-group" :class="{ 'field-changed': isFieldChanged('facility_type') }">
+              <label>
+                Type
+                <span v-if="isFieldChanged('facility_type')" class="changed-badge">edited</span>
+              </label>
+              <select v-model="form.facility_type" required>
+                <option value="academic">Academic</option>
                 <option value="administrative">Administrative</option>
-                <option value="library">Library</option>
-                <option value="sports">Sports & Recreation</option>
-                <option value="dining">Dining</option>
-                <option value="service">Service Facility</option>
+                <option value="facility">Facility</option>
               </select>
             </div>
           </div>
@@ -173,6 +185,7 @@ import api from '../../services/api.js'
 import { showToast } from '../../services/toast.js'
 
 const facilities = ref([])
+const rooms = ref([])
 const searchQuery = ref('')
 const filterType = ref('')
 const showCreateModal = ref(false)
@@ -180,13 +193,26 @@ const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const facilityToDelete = ref(null)
 
+// Track original values for change detection
+const originalFacility = ref(null)
+
+// Room Management
+const selectedFacility = ref('')
+const newRoomName = ref('')
+const newRoomFloor = ref('')
+
+// Announcement
+const announcementText = ref('')
+
 const form = ref({
   id: null,
   name: '',
+  room: '',
   code: '',
   facility_type: 'academic',
   description: '',
   total_floors: 1,
+  room_count: 0
 })
 
 const filteredFacilities = computed(() => {
@@ -200,6 +226,141 @@ const filteredFacilities = computed(() => {
     return matchesSearch && matchesType
   })
 })
+
+// Rooms filtered by selected facility for management
+const facilityRooms = computed(() => {
+  if (!selectedFacility.value) return []
+  const id = parseInt(selectedFacility.value)
+  return rooms.value.filter(r => r.facility === id || r.facility_id === id)
+})
+
+// Available floors for selected facility
+const availableFloors = computed(() => {
+  if (!selectedFacility.value) return []
+  return [1, 2, 3, 4]
+})
+
+// Handle facility selection - reset room inputs
+function onFacilitySelect() {
+  newRoomName.value = ''
+  newRoomFloor.value = ''
+}
+
+// Add a room to facility
+async function addRoom() {
+  if (!selectedFacility.value || !newRoomName.value.trim()) return
+  
+  try {
+    const roomData = {
+      name: newRoomName.value.trim(),
+      facility: parseInt(selectedFacility.value),
+      floor: parseInt(newRoomFloor.value) || 1,
+      is_active: true
+    }
+    
+    const response = await api.post('/rooms/', roomData)
+    const facility = facilities.value.find(f => f.id === parseInt(selectedFacility.value))
+    showToast(`Room "${roomData.name}" added successfully`, 'success')
+    
+    // Auto-create notification for new classroom
+    await createRoomNotification(roomData.name, facility, 'added', null, roomData.floor)
+    
+    // Reload rooms
+    const roomsRes = await api.get('/rooms/')
+    rooms.value = roomsRes.data || []
+    
+    // Reset inputs
+    newRoomName.value = ''
+    newRoomFloor.value = ''
+  } catch (error) {
+    console.error('Failed to add room:', error)
+    showToast('Failed to add room', 'error')
+  }
+}
+
+// Edit a room
+async function editRoom(room) {
+  const newName = prompt('Enter new room name:', room.name)
+  if (!newName || newName === room.name) return
+  
+  try {
+    await api.patch(`/rooms/${room.id}/`, { name: newName })
+    const facility = facilities.value.find(f => f.id === room.facility)
+    showToast(`Room updated to "${newName}"`, 'success')
+    
+    // Auto-create notification for classroom name change
+    await createRoomNotification(room.name, facility, 'renamed', newName, room.floor)
+    
+    // Reload rooms
+    const roomsRes = await api.get('/rooms/')
+    rooms.value = roomsRes.data || []
+  } catch (error) {
+    console.error('Failed to update room:', error)
+    showToast('Failed to update room', 'error')
+  }
+}
+
+// Delete a room
+async function deleteRoom(room) {
+  if (!confirm(`Are you sure you want to delete room "${room.name}"?`)) return
+  
+  try {
+    await api.delete(`/rooms/${room.id}/`)
+    const facility = facilities.value.find(f => f.id === room.facility)
+    showToast(`Room "${room.name}" deleted`, 'success')
+    
+    // Auto-create notification for classroom deletion
+    await createRoomNotification(room.name, facility, 'deleted', null, room.floor)
+    
+    // Reload rooms
+    const roomsRes = await api.get('/rooms/')
+    rooms.value = roomsRes.data || []
+  } catch (error) {
+    console.error('Failed to delete room:', error)
+    showToast('Failed to delete room', 'error')
+  }
+}
+
+// Create notification for classroom changes
+async function createRoomNotification(roomName, facility, action, newName = null, floor = null) {
+  try {
+    let title, message
+    const buildingName = facility?.name || 'the building'
+    const buildingCode = facility?.code ? `(${facility.code})` : ''
+    const floorInfo = floor ? `\n Floor: ${floor}` : ''
+    
+    switch (action) {
+      case 'added':
+        title = 'New Classroom Added'
+        message = `A new classroom "${roomName}" has been added to ${buildingName} ${buildingCode}.${floorInfo}\n\n📍 Location: ${buildingName} ${buildingCode}`
+        break
+      case 'deleted':
+        title = 'Classroom Removed'
+        message = `Classroom "${roomName}" has been removed from ${buildingName} ${buildingCode}.${floorInfo}`
+        break
+      case 'renamed':
+        title = 'Classroom Renamed'
+        message = `Classroom has been renamed:\n\nFrom: "${roomName}"\nTo: "${newName}"\n\n📍 Location: ${buildingName} ${buildingCode}${floorInfo}`
+        break
+      default:
+        title = 'Classroom Updated'
+        message = `Classroom "${roomName}" in ${buildingName} ${buildingCode} has been updated.${floorInfo}`
+    }
+    
+    console.log('Sending room notification API call:', { title, message })
+    const response = await api.post('/notifications/send/', {
+      title: title,
+      body: message,
+      type: action === 'deleted' ? 'warning' : 'info',
+      target: 'all'
+    })
+    console.log('Room notification API response:', response.data)
+  } catch (e) {
+    console.error('Failed to create room notification:', e)
+    console.error('Error response:', e.response?.data)
+    // Don't block if notification fails
+  }
+}
 
 function formatType(type) {
   const labels = {
@@ -215,13 +376,21 @@ function formatType(type) {
 
 function editFacility(facility) {
   form.value = { ...facility }
+  originalFacility.value = { ...facility }
   showEditModal.value = true
+}
+
+// Check if a field has been modified
+function isFieldChanged(fieldName) {
+  if (!originalFacility.value || !showEditModal.value) return false
+  return originalFacility.value[fieldName] !== form.value[fieldName]
 }
 
 function closeModal() {
   showCreateModal.value = false
   showEditModal.value = false
-  form.value = { id: null, name: '', code: '', facility_type: 'academic', description: '', total_floors: 1 }
+  originalFacility.value = null
+  form.value = { id: null, name: '', room: '', code: '', facility_type: 'academic', description: '', total_floors: 1, room_count: 0 }
 }
 
 function confirmDelete(facility) {
@@ -233,10 +402,15 @@ function viewRooms(facility) {
   window.dispatchEvent(new CustomEvent('admin-navigate', { detail: 'rooms' }))
 }
 
+
 async function loadFacilities() {
   try {
-    const response = await api.get('/facilities/')
-    facilities.value = response.data
+    const [facilitiesRes, roomsRes] = await Promise.all([
+      api.get('/facilities/'),
+      api.get('/rooms/')
+    ])
+    facilities.value = facilitiesRes.data
+    rooms.value = roomsRes.data || []
   } catch (e) {
     console.error('Failed to load facilities:', e)
     // Mock data
@@ -253,22 +427,139 @@ async function loadFacilities() {
 
 async function saveFacility() {
   try {
+    let facilityId
+    let isNew = false
+    let changes = null
+    
     if (showEditModal.value) {
+      // Get original facility to compare changes
+      const originalFacility = facilities.value.find(f => f.id === form.value.id)
       await api.put(`/facilities/${form.value.id}/`, form.value)
+      facilityId = form.value.id
+      // Track what changed
+      changes = getFacilityChanges(originalFacility, form.value)
     } else {
-      await api.post('/facilities/', form.value)
+      const response = await api.post('/facilities/', form.value)
+      facilityId = response.data?.id
+      isNew = true
     }
+    
+    // Auto-create notification for facility change
+    console.log('Creating facility notification:', form.value.name, isNew ? 'created' : 'updated')
+    try {
+      await createFacilityNotification(form.value, isNew ? 'created' : 'updated', changes)
+      console.log('Facility notification created successfully')
+    } catch (notifError) {
+      console.error('Failed to create facility notification:', notifError)
+    }
+    
     closeModal()
     loadFacilities()
   } catch (e) {
     console.error('Failed to save facility:', e)
+    console.error('Error response:', e.response?.data)
+    console.error('Error status:', e.response?.status)
     showToast('Failed to save facility', 'error')
+  }
+}
+
+// Compare original vs updated facility to track changes
+function getFacilityChanges(original, updated) {
+  if (!original || !updated) return null
+  
+  const changes = []
+  const fieldLabels = {
+    name: 'Name',
+    code: 'Code',
+    building_type: 'Type',
+    type: 'Type',
+    location: 'Location',
+    address: 'Location',
+    floors: 'Floors',
+    total_floors: 'Floors',
+    description: 'Description',
+    short_description: 'Description'
+  }
+  
+  for (const [key, label] of Object.entries(fieldLabels)) {
+    const originalVal = original[key]
+    const updatedVal = updated[key]
+    
+    if (originalVal !== undefined && updatedVal !== undefined && originalVal !== updatedVal) {
+      changes.push({
+        field: label,
+        old: originalVal,
+        new: updatedVal
+      })
+    }
+  }
+  
+  return changes.length > 0 ? changes : null
+}
+
+// Create notification for facility changes
+async function createFacilityNotification(facility, action, changes = null) {
+  try {
+    console.log('createFacilityNotification called:', facility.name, action)
+    let title, message
+    const facilityType = facility.building_type || facility.type || 'Building'
+    const floors = facility.floors || facility.total_floors || 'N/A'
+    const description = facility.description || facility.short_description || ''
+    
+    if (action === 'created') {
+      title = 'New Building Added'
+      message = `A new ${facilityType.toLowerCase()} "${facility.name}" (${facility.code}) has been added to the campus.\n\n`
+      message += `Location: ${facility.location || facility.address || 'Campus'}\n`
+      message += `Type: ${facilityType}\n`
+      message += `Floors: ${floors}\n`
+      if (description) {
+        message += `Description: ${description.substring(0, 100)}${description.length > 100 ? '...' : ''}`
+      }
+    } else if (action === 'updated') {
+      title = 'Building Updated'
+      message = `Building "${facility.name}" (${facility.code}) has been updated.\n\n`
+      // Show what specifically changed
+      if (changes && changes.length > 0) {
+        message += 'Changes made:\n'
+        changes.forEach((change, index) => {
+          const oldVal = String(change.old).substring(0, 30)
+          const newVal = String(change.new).substring(0, 30)
+          message += `${index + 1}. ${change.field}: "${oldVal}" → "${newVal}"\n`
+        })
+        message += '\n'
+      }
+      message += `Current details:\n`
+      message += `Location: ${facility.location || facility.address || 'Campus'}\n`
+      message += `Type: ${facilityType}\n`
+      message += `Floors: ${floors}`
+    } else if (action === 'deleted') {
+      title = 'Building Removed'
+      message = `Building "${facility.name}" (${facility.code}) has been removed from the campus.`
+    }
+    
+    console.log('Sending notification API call:', { title, message })
+    const response = await api.post('/notifications/send/', {
+      title: title,
+      body: message,
+      type: action === 'deleted' ? 'warning' : 'info',
+      target: 'all'
+    })
+    console.log('Notification API response:', response.data)
+  } catch (e) {
+    console.error('Failed to create facility notification:', e)
+    console.error('Error response:', e.response?.data)
+    // Don't block the save if notification fails
   }
 }
 
 async function deleteFacility() {
   try {
-    await api.delete(`/facilities/${facilityToDelete.value.id}/`)
+    const facility = facilityToDelete.value
+    await api.delete(`/facilities/${facility.id}/`)
+    
+    // Auto-create notification for building deletion
+    await createFacilityNotification(facility, 'deleted')
+    
     showDeleteModal.value = false
     loadFacilities()
   } catch (e) {
@@ -282,11 +573,46 @@ onMounted(loadFacilities)
 <style scoped>
 .adminfacilities-section { padding: 0; font-family: var(--font-primary); max-width: 1400px; }
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
+/* Visual indicator for changed fields */
+.field-changed input,
+.field-changed select,
+.field-changed textarea {
+  border-color: #f59e0b !important;
+  background-color: #fffbeb !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
+}
+
+.field-changed label {
+  color: #d97706 !important;
+  font-weight: 600;
+}
+
+.changed-badge {
+  display: inline-flex;
   align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: #f59e0b;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.section-header {
   margin-bottom: 24px;
+}
+
+.header-title {
+  flex: 1;
 }
 
 .section-header h1 {
@@ -296,10 +622,21 @@ onMounted(loadFacilities)
   margin: 0 0 4px 0;
 }
 
+.btn-add-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  margin-bottom: 24px;
+  font-size: var(--text-base);
+  font-weight: 600;
+  width: auto;
+}
+
 .subtitle {
   font-size: var(--text-base);
   color: var(--color-text-secondary);
-  margin: 0;
+  margin: 0 0 8px 0;
 }
 
 .btn-primary {
@@ -398,6 +735,132 @@ onMounted(loadFacilities)
   color: var(--color-text-primary);
   min-width: 160px;
   cursor: pointer;
+}
+
+/* Room Management Section */
+.room-management-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.room-management-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 12px;
+}
+
+.room-management-section h3 .material-icons {
+  color: var(--color-primary);
+}
+
+.room-management-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.room-management-row .admin-input {
+  flex: 1;
+  min-width: 150px;
+  padding: 10px 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.room-management-row .admin-input:disabled {
+  background: var(--color-surface);
+  color: var(--color-text-hint);
+  cursor: not-allowed;
+}
+
+.rooms-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.room-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.room-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.room-floor {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.no-rooms {
+  margin-top: 16px;
+  padding: 16px;
+  text-align: center;
+  color: var(--color-text-hint);
+  background: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+/* Announcement Section */
+.announcement-section {
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.announcement-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 12px;
+}
+
+.announcement-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.announcement-row .announcement-input {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
 }
 
 .facilities-grid {
@@ -539,6 +1002,27 @@ onMounted(loadFacilities)
 
 .btn-icon .material-icons {
   font-size: 18px;
+}
+
+.btn-announce {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--color-success);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-announce:hover {
+  background: var(--color-success-dark);
+  transform: translateY(-1px);
 }
 
 .empty-state {

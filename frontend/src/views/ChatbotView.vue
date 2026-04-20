@@ -115,17 +115,11 @@ import { useRouter } from 'vue-router'
 import aiChatbot from '../services/aiChatbot.js'
 import { isOnline } from '../services/sync.js'
 import { getFAQEntries } from '../services/offlineData.js'
+import db from '../services/db.js'
 
 const router = useRouter()
 
-const messages = ref([
-  { 
-    type: 'bot', 
-    text: "Hello! I'm your SEAIT Campus Assistant. I can help you find buildings, rooms, navigate the campus, and answer questions about SEAIT. What would you like to know?",
-    timestamp: new Date(),
-    source: ''
-  }
-])
+const messages = ref([])
 const userInput = ref('')
 const isTyping = ref(false)
 const showFAQ = ref(true)
@@ -215,6 +209,42 @@ async function loadFAQ() {
   }
 }
 
+async function loadChatHistory() {
+  try {
+    const history = await db.ai_chat_logs.orderBy('created_at').toArray()
+    if (history && history.length > 0) {
+      // Convert history to messages format
+      messages.value = history.map(h => ({
+        type: h.mode === 'user' ? 'user' : 'bot',
+        text: h.message,
+        timestamp: new Date(h.created_at),
+        source: h.mode === 'assistant' ? (h.source || '') : ''
+      }))
+    } else {
+      // No history - show welcome message
+      messages.value = [
+        { 
+          type: 'bot', 
+          text: "Hello! I'm your SEAIT Campus Assistant. I can help you find buildings, rooms, navigate the campus, and answer questions about SEAIT. What would you like to know?",
+          timestamp: new Date(),
+          source: ''
+        }
+      ]
+    }
+  } catch (err) {
+    console.error('[Chatbot] Failed to load history:', err)
+    // Fallback to welcome message
+    messages.value = [
+      { 
+        type: 'bot', 
+        text: "Hello! I'm your SEAIT Campus Assistant. I can help you find buildings, rooms, navigate the campus, and answer questions about SEAIT. What would you like to know?",
+        timestamp: new Date(),
+        source: ''
+      }
+    ]
+  }
+}
+
 async function sendMessage() {
   if (!userInput.value.trim() || isTyping.value) return
 
@@ -276,7 +306,9 @@ onMounted(async () => {
   inputField.value?.focus()
   await checkFlaskConnection()
   await loadFAQ()
+  await loadChatHistory()
   await aiChatbot.initChatHistory()
+  scrollToBottom()
 })
 </script>
 

@@ -32,20 +32,28 @@
           v-for="notif in notifications"
           :key="notif.id"
           :class="['notifications-card', notif.type, { 'notifications-unread': !notif.is_read }]"
-          @click="markAsRead(notif)"
         >
-          <div class="notifications-card-header">
-            <span
-              v-if="notif.source_label"
-              :class="['source-chip', 'chip-' + (notif.source_color || 'orange')]"
-            >
-              {{ notif.source_label }}
-            </span>
-            <span class="notifications-badge" :class="notif.type">{{ notif.type }}</span>
-            <span class="notifications-time">{{ formatTime(notif.created_at) }}</span>
+          <div class="notifications-card-content" @click="markAsRead(notif)">
+            <div class="notifications-card-header">
+              <span
+                v-if="notif.source_label"
+                :class="['source-chip', 'chip-' + (notif.source_color || 'orange')]"
+              >
+                {{ notif.source_label }}
+              </span>
+              <span class="notifications-badge" :class="notif.type">{{ notif.type }}</span>
+              <span class="notifications-time">{{ formatTime(notif.created_at) }}</span>
+            </div>
+            <h3>{{ notif.title }}</h3>
+            <p>{{ notif.message }}</p>
           </div>
-          <h3>{{ notif.title }}</h3>
-          <p>{{ notif.message }}</p>
+          <button 
+            class="notifications-delete-btn" 
+            @click.stop="deleteNotification(notif)"
+            title="Delete notification"
+          >
+            <span class="material-icons">delete</span>
+          </button>
         </div>
       </div>
     </div>
@@ -69,27 +77,44 @@ const unreadCount = computed(() =>
 
 const goBack = () => router.back()
 
-onMounted(async () => {
+onMounted(async function syncNotifications() {
+  if (!isOnline()) return
   try {
-    if (isOnline()) {
-      try {
-        const res = await api.get('/notifications/')
-        notifications.value = res.data
-        await db.notifications.clear()
-        await db.notifications.bulkPut(res.data)
-      } catch {
-        notifications.value = await db.notifications
-          .orderBy('created_at').reverse().toArray()
+    // Get dismissed list to filter server results
+    const dismissed = await getDismissed()
+    
+    const res = await api.get('/notifications/')
+    const server = res.data
+    for (const n of server) {
+      // Skip if user has dismissed this notification
+      if (dismissed.includes(n.id)) continue
+      
+      const exists = await db.notifications.get(n.id)
+      if (!exists) {
+        await db.notifications.put({ ...n, is_read: false })
       }
-    } else {
-      notifications.value = await db.notifications
-        .orderBy('created_at').reverse().toArray()
     }
-  } catch (err) {
-    console.error('[Notifications] Failed to load:', err)
-    showToast('Unable to load notifications', 'error')
+    await loadNotifications()
+    await processPendingReads()
+  } catch (e) {
+    console.error('Sync failed:', e)
   }
 })
+
+async function loadNotifications() {
+  try {
+    // Get list of dismissed notifications
+    const dismissed = await getDismissed()
+    
+    const local = await db.notifications.toArray()
+    // Filter out dismissed notifications
+    notifications.value = local
+      .filter(n => !dismissed.includes(n.id))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+  } catch (e) {
+    console.error('Failed to load notifications:', e)
+  }
+}
 
 function formatTime(timestamp) {
   if (!timestamp) return ''
@@ -140,6 +165,59 @@ async function markAllAsRead() {
   }
 }
 
+async function deleteNotification(notif) {
+  // Show confirmation dialog
+  const confirmed = confirm(`Delete this notification?\n\n"${notif.title}"`)
+  if (!confirmed) return
+  
+  try {
+    // Remove from local array
+    notifications.value = notifications.value.filter(n => n.id !== notif.id)
+    
+    // Delete from local DB
+    await db.notifications.delete(notif.id)
+    
+    // Track this as dismissed so it doesn't reappear on refresh
+    await storeDismissed(notif.id)
+    
+    // Try to delete from server if online (for user-created notifications)
+    if (isOnline()) {
+      try {
+        await api.delete(`/notifications/${notif.id}/`)
+        showToast('Notification deleted', 'success')
+      } catch (e) {
+        console.log('[Notifications] Server delete failed (probably announcement):', e)
+        showToast('Notification dismissed', 'success')
+      }
+    } else {
+      showToast('Notification dismissed', 'success')
+    }
+  } catch (err) {
+    console.error('[Notifications] Failed to delete:', err)
+    showToast('Failed to delete notification', 'error')
+  }
+}
+
+async function storeDismissed(id) {
+  try {
+    const meta = await db.sync_meta.get('dismissed_notifications')
+    const dismissed = meta?.value || []
+    if (!dismissed.includes(id)) {
+      dismissed.push(id)
+      await db.sync_meta.put({ key: 'dismissed_notifications', value: dismissed })
+    }
+  } catch { /* silent */ }
+}
+
+async function getDismissed() {
+  try {
+    const meta = await db.sync_meta.get('dismissed_notifications')
+    return meta?.value || []
+  } catch {
+    return []
+  }
+}
+
 async function storePendingRead(id) {
   try {
     const meta    = await db.sync_meta.get('pending_reads')
@@ -150,9 +228,62 @@ async function storePendingRead(id) {
     }
   } catch { /* silent */ }
 }
+
+async function processPendingReads() {
+  try {
+    const meta = await db.sync_meta.get('pending_reads')
+    const pending = meta?.value || []
+    if (pending.length === 0) return
+
+    if (isOnline()) {
+      try {
+        // Send all pending read notifications to server
+        for (const id of pending) {
+          try {
+            await api.post(`/notifications/${id}/read/`)
+          } catch (e) {
+            console.log(`[Notifications] Failed to sync read for ${id}:`, e)
+          }
+        }
+        // Clear pending reads after successful sync
+        await db.sync_meta.put({ key: 'pending_reads', value: [] })
+      } catch (e) {
+        console.log('[Notifications] Failed to process pending reads:', e)
+      }
+    }
+  } catch { /* silent */ }
+}
 </script>
 
 <!-- FIX: All styles in external file — no more inline <style> block -->
 <style>
 @import '../assets/notifications.css';
+
+/* Delete button - ensure visibility */
+.notifications-delete-btn {
+  background: var(--color-surface-2, #2a2a2a);
+  border: 1px solid var(--color-border, #444);
+  padding: 8px;
+  cursor: pointer;
+  color: var(--color-text-secondary, #888);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  min-width: 36px;
+  min-height: 36px;
+  margin-left: 12px;
+}
+
+.notifications-delete-btn:hover {
+  background: #F44336;
+  color: white;
+  border-color: #F44336;
+}
+
+.notifications-delete-btn .material-icons {
+  font-size: 20px;
+}
 </style>
