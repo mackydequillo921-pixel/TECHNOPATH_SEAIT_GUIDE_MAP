@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Miscellaneous
 *.class
 *.log
@@ -81,4 +82,5 @@ _flutter_archive/.dart_tool/
 *.pem
 
 # Nested repositories
+TECHNOPATH_SEAIT_GUIDE_MAP/
 SEAIT_TechnoPath/
