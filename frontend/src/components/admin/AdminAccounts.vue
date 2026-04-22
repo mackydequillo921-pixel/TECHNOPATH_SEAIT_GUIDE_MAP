@@ -6,10 +6,6 @@
         <h1>Admin Accounts</h1>
         <p class="subtitle">Manage administrator accounts, roles, and permissions</p>
       </div>
-      <button class="btn-primary" @click="showCreateModal = true">
-        <span class="material-icons">person_add</span>
-        Add Admin
-      </button>
     </div>
 
     <!-- Stats Row -->
@@ -26,6 +22,10 @@
         <span class="stat-number">{{ admins.filter(a => !a.is_active).length }}</span>
         <span class="stat-label">Inactive</span>
       </div>
+      <button class="btn-primary btn-add-admin" @click="showCreateModal = true">
+        <span class="material-icons">person_add</span>
+        Add Admin
+      </button>
     </div>
 
     <!-- Filters -->
@@ -386,6 +386,14 @@ onMounted(loadAdmins)
 
 .btn-primary .material-icons {
   font-size: 20px;
+}
+
+.btn-add-admin {
+  align-self: center;
+  margin-left: auto;
+  height: 44px;
+  padding: 0 20px;
+  font-size: 14px;
 }
 
 .stats-row {

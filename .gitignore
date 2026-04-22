@@ -79,3 +79,6 @@ _flutter_archive/.dart_tool/
 *secrets.txt
 *.key
 *.pem
+
+# Nested repositories
+SEAIT_TechnoPath/

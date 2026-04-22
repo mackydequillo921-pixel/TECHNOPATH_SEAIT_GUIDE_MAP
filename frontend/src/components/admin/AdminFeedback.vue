@@ -105,10 +105,6 @@
               <span class="material-icons">mark_email_read</span>
               Mark Read
             </button>
-            <button class="btn-action" @click="showResponseModal(item)">
-              <span class="material-icons">reply</span>
-              Respond
-            </button>
           </div>
         </div>
       </div>

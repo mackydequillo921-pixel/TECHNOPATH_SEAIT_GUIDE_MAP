@@ -218,6 +218,35 @@
   transition: stroke-dashoffset 0.05s linear;
 }
 
+/* ── Navigation Path Overlay ──────────────────────────────── */
+.nav-path-overlay polyline {
+  stroke: #FF9800 !important;
+}
+
+.nav-path-overlay circle[fill="#FF5722"],
+.nav-path-overlay circle[fill="#4CAF50"] {
+  stroke: white !important;
+  stroke-width: 3;
+}
+
+/* ── Prevent Dark Mode from affecting Map Colors ──────────── */
+.svg-map-container svg,
+.svg-map-container path,
+.svg-map-container line,
+.svg-map-container polyline,
+.svg-map-container rect,
+.svg-map-container circle,
+.svg-map-container ellipse,
+.svg-map-container polygon {
+  color-scheme: light only !important;
+  forced-color-adjust: none !important;
+}
+
+/* Force navigation path to stay orange in dark mode */
+.nav-path-overlay {
+  color-scheme: light only !important;
+}
+
 /* ── Markers on nav map ───────────────────────────────────── */
 
 .navview-marker {

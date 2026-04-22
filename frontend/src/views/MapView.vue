@@ -16,7 +16,7 @@
       <div class="mapview-transform" :style="transformStyle">
         <!-- SVG Map -->
         <img 
-          src="../assets/SEAITMAP.svg" 
+          src="../assets/Map_labeled.svg" 
           class="mapview-svg" 
           alt="Campus Map" 
           draggable="false"

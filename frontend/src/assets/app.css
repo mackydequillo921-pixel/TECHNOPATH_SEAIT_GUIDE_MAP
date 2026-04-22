@@ -492,3 +492,140 @@ html, body {
     transform: translateY(0);
   }
 }
+
+/* ── Page Transition Animations ─────────────────────────── */
+
+/* Base transition styles */
+.app-main-content,
+.app-content-area {
+  position: relative;
+}
+
+/* Fade Slide Transition (Default) */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+/* Home Transition - slides from left */
+.slide-home-enter-active,
+.slide-home-leave-active {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-home-enter-from {
+  opacity: 0;
+  transform: translateX(-50px) scale(0.95);
+}
+
+.slide-home-leave-to {
+  opacity: 0;
+  transform: translateX(50px) scale(0.95);
+}
+
+/* Navigate Transition - slides from bottom */
+.slide-navigate-enter-active,
+.slide-navigate-leave-active {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-navigate-enter-from {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.slide-navigate-leave-to {
+  opacity: 0;
+  transform: translateY(-40px);
+}
+
+/* Settings Transition - fade with scale */
+.slide-settings-enter-active,
+.slide-settings-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-settings-enter-from {
+  opacity: 0;
+  transform: scale(0.9) translateY(20px);
+}
+
+.slide-settings-leave-to {
+  opacity: 0;
+  transform: scale(1.1) translateY(-20px);
+}
+
+/* Navigation Item Animations */
+.app-side-nav-item,
+.app-nav-item {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Active state animation */
+.app-side-nav-item.app-active,
+.app-nav-item.app-active {
+  animation: navActivate 0.4s ease-out;
+}
+
+@keyframes navActivate {
+  0% {
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Hover effects for navigation */
+.app-side-nav-item:hover {
+  transform: translateX(4px);
+}
+
+.app-nav-item:hover {
+  transform: translateY(-2px);
+}
+
+.app-nav-item:active {
+  transform: scale(0.95);
+}
+
+/* Icon animation on hover */
+.app-side-nav-item:hover .material-icons,
+.app-nav-item:hover .material-icons {
+  animation: iconBounce 0.4s ease-out;
+}
+
+@keyframes iconBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Notification badge animation */
+.nav-badge {
+  animation: badgePop 0.3s ease-out;
+}
+
+@keyframes badgePop {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

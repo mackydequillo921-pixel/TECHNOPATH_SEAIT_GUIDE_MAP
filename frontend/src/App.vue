@@ -85,12 +85,18 @@
           Updating map data...
         </div>
 
-        <!-- Router View -->
+        <!-- Router View with Transitions -->
         <main class="app-main-content">
-          <router-view v-slot="{ Component }">
-            <keep-alive :include="['HomeView', 'SettingsView']">
-              <component :is="Component" />
-            </keep-alive>
+          <router-view v-slot="{ Component, route }">
+            <transition
+              :name="getTransitionName(route)"
+              mode="out-in"
+              appear
+            >
+              <keep-alive :include="['HomeView', 'SettingsView']">
+                <component :is="Component" :key="route.path" />
+              </keep-alive>
+            </transition>
           </router-view>
         </main>
       </div>
@@ -108,12 +114,18 @@
         Updating...
       </div>
 
-      <!-- Main Content -->
+      <!-- Main Content with Transitions -->
       <div class="app-content-area">
-        <router-view v-slot="{ Component }">
-          <keep-alive :include="['HomeView', 'SettingsView']">
-            <component :is="Component" />
-          </keep-alive>
+        <router-view v-slot="{ Component, route }">
+          <transition
+            :name="getTransitionName(route)"
+            mode="out-in"
+            appear
+          >
+            <keep-alive :include="['HomeView', 'SettingsView']">
+              <component :is="Component" :key="route.path" />
+            </keep-alive>
+          </transition>
         </router-view>
       </div>
 
@@ -174,6 +186,15 @@ const isActiveRoute = (path) => {
     return route.path === '/navigate' || route.path === '/map'
   }
   return route.path === path
+}
+
+// Get transition name based on route
+const getTransitionName = (route) => {
+  // Different transitions for different routes
+  if (route.path === '/') return 'slide-home'
+  if (route.path === '/navigate' || route.path === '/map') return 'slide-navigate'
+  if (route.path === '/settings') return 'slide-settings'
+  return 'fade-slide'
 }
 
 // Full menu for desktop side nav (simplified - removed items with floating buttons)

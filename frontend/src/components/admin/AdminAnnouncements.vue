@@ -8,9 +8,7 @@
       <textarea v-model="newContent" placeholder="Content" class="tp-textarea" rows="4"></textarea>
       <select v-model="newScope" class="tp-select">
         <option value="campus_wide">Entire Campus</option>
-        <option value="all_college">All College Students</option>
-        <option value="basic_ed_only">Basic Education Only</option>
-        <option value="department">My Department Only</option>
+        <option value="all_college">Normal admin</option>
         <option value="specific_users">Specific Users (by name/ID)</option>
       </select>
       <!-- User Picker for Specific Users -->
@@ -83,9 +81,7 @@
         <textarea v-model="editContent" class="tp-textarea" rows="3" placeholder="Content"></textarea>
         <select v-model="editScope" class="tp-select">
           <option value="campus_wide">Entire Campus</option>
-          <option value="all_college">All College Students</option>
-          <option value="basic_ed_only">Basic Education Only</option>
-          <option value="department">My Department Only</option>
+          <option value="all_college">Normal admin</option>
           <option value="specific_users">Specific Users (by name/ID)</option>
         </select>
         <div class="adminannouncements-actions">

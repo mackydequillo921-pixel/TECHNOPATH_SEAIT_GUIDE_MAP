@@ -90,8 +90,14 @@
 
           <!-- To Location -->
           <div class="svg-nav-field svg-nav-field-compact">
-            <select v-model="toLocation" class="svg-nav-select">
-              <option value="">To: Select location</option>
+            <select 
+              v-model="toLocation" 
+              class="svg-nav-select"
+              :disabled="!fromLocation"
+            >
+              <option value="">
+                {{ fromLocation ? 'To: Select destination' : 'First select From location' }}
+              </option>
               <option v-for="location in toLocations" :key="location.id" :value="location.id">
                 {{ location.name }}
               </option>
@@ -99,10 +105,10 @@
           </div>
 
           <!-- Start Button (inline) -->
-          <button 
+          <button
             v-if="fromLocation && toLocation"
-            class="svg-nav-start-btn svg-nav-start-btn-compact" 
-            @click="startNavigation" 
+            class="svg-nav-start-btn svg-nav-start-btn-compact"
+            @click="startNavigation"
             :disabled="!fromLocation || !toLocation"
           >
             <span class="material-icons">play_arrow</span>
@@ -286,6 +292,7 @@
         title="Notifications"
       >
         <span class="material-icons">notifications</span>
+        <span v-if="unreadCount > 0" class="nav-fab-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
       </button>
 
       <!-- Rate -->
@@ -298,14 +305,15 @@
       </button>
       
       <!-- Chatbot -->
-      <button 
-        class="nav-fab-btn nav-chatbot-btn" 
+      <button
+        class="nav-fab-btn nav-chatbot-btn"
         @click="$router.push('/chatbot')"
         title="Chatbot"
       >
         <span class="material-icons">smart_toy</span>
       </button>
     </div>
+
   </div>
 </template>
 
@@ -313,6 +321,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import pathManager from '../services/pathManager.js'
 import { useLocations } from '../composables/useLocations.js'
+import api from '../services/api.js'
 
 // DOM References
 const mapContainer = ref(null)
@@ -328,7 +337,18 @@ const ORIGINAL_VIEWBOX = { width: 3306, height: 7159 }
 const zoomLevel = ref(1)
 const rotation = ref(0)
 const pathPositions = ref([])
-const unreadCount = ref(5) // TODO: Connect to notifications service
+const unreadCount = ref(0)
+
+// Load notification count from API
+const loadNotificationCount = async () => {
+  try {
+    const res = await api.get('/notifications/')
+    unreadCount.value = res.data.filter(n => !n.is_read).length
+  } catch (error) {
+    console.error('Error loading notifications:', error)
+    unreadCount.value = 0
+  }
+}
 const mapError = ref(null)
 
 // Destination info panel minimized state
@@ -357,9 +377,45 @@ const fromLocations = computed(() => {
   return endpoints.length > 0 ? endpoints : locations.value.filter(validLocation)
 })
 
+// Filter TO locations based on selected FROM location
 const toLocations = computed(() => {
-  const endpoints = locations.value.filter(l => l.subtype === 'to' && validLocation(l))
-  return endpoints.length > 0 ? endpoints : locations.value.filter(validLocation)
+  if (!fromLocation.value) {
+    // No From selected yet - show all available destinations or empty
+    return []
+  }
+  
+  // Find all paths that start from the selected From location
+  const pathsFromSelected = availablePaths.value.filter(p => {
+    // Check if path starts with the selected From location
+    if (p.elementIds && p.elementIds.length >= 2) {
+      return p.elementIds[0] === fromLocation.value
+    }
+    // Fallback: check from field
+    return p.from === fromLocation.value
+  })
+  
+  // Extract unique destination IDs from these paths
+  const destinationIds = new Set()
+  pathsFromSelected.forEach(p => {
+    if (p.elementIds && p.elementIds.length >= 2) {
+      // Add all destinations except the first one (which is the From)
+      p.elementIds.slice(1).forEach(id => destinationIds.add(id))
+    }
+    // Also check the 'to' field if it exists
+    if (p.to) {
+      destinationIds.add(p.to)
+    }
+  })
+  
+  // Convert to location objects
+  const destinations = Array.from(destinationIds).map(id => {
+    const loc = locations.value.find(l => l.id === id)
+    if (loc) return loc
+    // Create a basic location object if not found in locations list
+    return { id, name: id }
+  }).filter(Boolean)
+  
+  return destinations
 })
 
 // Drag/Pan state
@@ -433,7 +489,7 @@ const loadMap = async () => {
   console.log('[NavigateView] Starting to load map...')
   try {
     // Load SVG file
-    const response = await fetch('SEAITMAP.svg')
+    const response = await fetch('Map_labeled.svg')
     console.log('[NavigateView] Map response:', response.status, response.ok)
     if (!response.ok) throw new Error(`Failed to load map: ${response.status}`)
     
@@ -949,6 +1005,14 @@ watch(availablePaths, () => {
   extractLocationsFromPaths()
 }, { immediate: true })
 
+// Watch for FROM location changes - reset TO location
+watch(fromLocation, (newFrom, oldFrom) => {
+  if (newFrom !== oldFrom) {
+    console.log('[NavigateView] From location changed, resetting To location')
+    toLocation.value = '' // Reset To location when From changes
+  }
+})
+
 // Watch for TO location changes and recalculate path
 watch(toLocation, () => {
   if (isNavigating.value && currentPath.value) {
@@ -960,6 +1024,7 @@ watch(toLocation, () => {
 // Lifecycle
 onMounted(async () => {
   loadMap()
+  loadNotificationCount()
   // Wait for paths to load from storage/API, then extract locations
   await new Promise(resolve => setTimeout(resolve, 500))
   extractLocationsFromPaths()
@@ -1917,6 +1982,13 @@ onUnmounted(() => {
 .svg-nav-field-compact .svg-nav-select {
   font-size: 13px;
   padding: 8px 12px;
+}
+
+.svg-nav-field-compact .svg-nav-select:disabled {
+  background: var(--color-bg-secondary, #f5f5f5);
+  color: var(--color-text-muted, #999);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .svg-nav-start-btn-compact {

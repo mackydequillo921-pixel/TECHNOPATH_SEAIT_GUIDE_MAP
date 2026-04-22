@@ -1,83 +1,134 @@
 <template>
   <div class="admin-path-manager">
-    <h2>SVG Path Management</h2>
+    <h2>AdminPathManager</h2>
     <p class="admin-description">
       Create and manage navigation paths using SVG element IDs. 
       Each path is a sequence of SVG element IDs that will be connected to form a route.
     </p>
 
-    <!-- Path List -->
-    <div v-if="!isCreatingNew" class="admin-section">
+    <!-- FROM/TO Hierarchical Path Management -->
+    <div v-if="!isEditing" class="admin-section">
       <div class="admin-section-header">
-        <h3>Existing Paths</h3>
-        <button class="admin-btn admin-btn-primary" @click="createNewPath">
-          <span class="material-icons">add</span>
-          Create New Path
-        </button>
+        <h3>Path Management (From → To)</h3>
+        <div class="header-actions">
+          <button class="admin-btn admin-btn-primary" @click="createNewPath">
+            <span class="material-icons">add</span>
+            Create Path
+          </button>
+        </div>
       </div>
 
-      <div v-if="paths.length === 0" class="admin-empty">
-        No paths created yet. Click "Create New Path" to start.
-      </div>
+      <transition name="fade" mode="out-in">
+        <div v-if="fromLocations.length === 0" class="admin-empty" key="empty">
+          <p>No From locations created yet.</p>
+          <p>Use "Create Path" to add new paths with From locations.</p>
+        </div>
 
-      <div v-else class="admin-path-list">
-        <div 
-          v-for="path in paths" 
-          :key="path.id"
-          class="admin-path-item"
-          :class="{ 'is-editing': editingPathId === path.id }"
-          @click="editPath(path.id)"
-        >
-          <div class="admin-path-info">
-            <h4>{{ path.name }}</h4>
-            <p v-if="path.description">{{ path.description }}</p>
-            <div class="admin-path-route" v-if="path.elementIds && path.elementIds.length > 0 && path.elementIds[0]">
-              <span class="route-from">FROM: {{ path.elementIds[0] }}</span>
-              <span class="route-arrow">→</span>
-              <span class="route-to" v-if="path.elementIds.length > 1 && path.elementIds[path.elementIds.length - 1]">
-                TO: {{ path.elementIds[path.elementIds.length - 1] }}
-              </span>
-              <span class="route-to" v-else>No destination</span>
+        <!-- From Locations List -->
+        <div v-else class="admin-from-locations" key="locations">
+        <div class="from-locations-header">
+          <h4>Select a From Location to manage its routes:</h4>
+        </div>
+        
+        <div class="from-locations-grid">
+          <div 
+            v-for="fromLoc in fromLocations" 
+            :key="fromLoc"
+            class="from-location-card"
+            :class="{ 'is-selected': selectedFromLocation === fromLoc }"
+            @click="selectFromLocation(fromLoc)"
+          >
+            <div class="from-location-icon">
+              <span class="material-icons">place</span>
             </div>
-            <div class="admin-path-route" v-else-if="path.from && path.to">
-              <span class="route-from">FROM: {{ path.from }}</span>
-              <span class="route-arrow">→</span>
-              <span class="route-to">TO: {{ path.to }}</span>
+            <div class="from-location-info">
+              <h5>{{ fromLoc }}</h5>
+              <span class="route-count">{{ getRoutesForFromLocation(fromLoc).length }} routes</span>
             </div>
-            <div class="admin-path-meta">
-              <span>{{ path.elementIds.length }} stops</span>
-              <span v-if="path.facility">{{ path.facility }}</span>
-              <span v-if="path.room">Room: {{ path.room }}</span>
-              <span v-if="path.floor">Floor: {{ path.floor }}</span>
-              <span>Updated: {{ formatDate(path.updatedAt) }}</span>
-            </div>
-          </div>
-          <div class="admin-path-actions">
-            <button class="admin-icon-btn" @click.stop="navigateToPath(path.id)" title="Navigate">
-              <span class="material-icons">navigation</span>
-            </button>
-            <button class="admin-icon-btn" @click.stop="previewPath(path.id)" title="Preview">
-              <span class="material-icons">visibility</span>
-            </button>
-            <button class="admin-icon-btn" @click.stop="duplicatePath(path.id)" title="Duplicate">
-              <span class="material-icons">content_copy</span>
-            </button>
-            <button class="admin-icon-btn admin-icon-btn-danger" @click.stop="deletePath(path.id)" title="Delete">
+            <button 
+              class="admin-icon-btn admin-icon-btn-small delete-from-btn" 
+              @click.stop="deleteFromLocation(fromLoc)"
+              title="Delete From location"
+            >
               <span class="material-icons">delete</span>
             </button>
           </div>
         </div>
+
+        <!-- Routes for Selected From Location -->
+        <transition name="slide-up">
+          <div v-if="selectedFromLocation" class="admin-routes-section">
+          <div class="routes-header">
+            <h4>Routes from "{{ selectedFromLocation }}"</h4>
+            <button class="admin-btn admin-btn-primary" @click="addRoute">
+              <span class="material-icons">add_road</span>
+              Add Route
+            </button>
+          </div>
+
+          <div v-if="routesFromSelected.length === 0" class="admin-empty">
+            No routes created yet from {{ selectedFromLocation }}.
+            <br>Click "Add Route" to create a path to a destination.
+          </div>
+
+          <div v-else class="routes-list">
+            <div 
+              v-for="(route, index) in routesFromSelected" 
+              :key="route.id"
+              class="route-item"
+              :class="{ 'is-editing': selectedRouteIndex === index }"
+              @click="selectRoute(index)"
+            >
+              <div class="route-number">{{ index + 1 }}</div>
+              <div class="route-info">
+                <div class="route-from-to">
+                  <span class="from-label">{{ selectedFromLocation }}</span>
+                  <span class="arrow">→</span>
+                  <span class="to-label">{{ route.to }}</span>
+                </div>
+                <div class="route-details">
+                  <span>{{ route.elementIds.length }} stops</span>
+                  <span v-if="route.name">{{ route.name }}</span>
+                </div>
+              </div>
+              <div class="route-actions">
+                <button class="admin-icon-btn" @click.stop="navigateToPath(route.id)" title="Navigate">
+                  <span class="material-icons">navigation</span>
+                </button>
+                <button class="admin-icon-btn" @click.stop="previewPath(route.id)" title="Preview">
+                  <span class="material-icons">visibility</span>
+                </button>
+                <button class="admin-icon-btn admin-icon-btn-danger" @click.stop="deleteRoute(index)" title="Delete">
+                  <span class="material-icons">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </transition>
       </div>
+    </transition>
     </div>
 
     <!-- Path Editor -->
-    <div v-if="isEditing" class="admin-section admin-editor">
+    <transition name="slide-editor">
+      <div v-if="isEditing" class="admin-section admin-editor" ref="editorSection">
       <div class="admin-section-header">
-        <h3>{{ isCreatingNew ? 'Create New Path' : 'Edit Path' }}</h3>
-        <button v-if="isCreatingNew" class="admin-btn admin-btn-primary" @click="createNewPath">
-          <span class="material-icons">add</span>
-          Create Another Path
-        </button>
+        <div class="editor-header-content">
+          <h3>{{ isCreatingNew ? 'Create New Route' : 'Edit Route' }}</h3>
+          <div v-if="selectedFromLocation" class="route-context">
+            <span class="from-badge">FROM: {{ selectedFromLocation }}</span>
+            <span v-if="editForm.elementIds.length > 1" class="to-badge">
+              TO: {{ editForm.elementIds[editForm.elementIds.length - 1] || 'Not set' }}
+            </span>
+          </div>
+        </div>
+        <div class="editor-actions">
+          <button v-if="isCreatingNew && selectedFromLocation" class="admin-btn" @click="addRoute">
+            <span class="material-icons">add</span>
+            Add Another Route
+          </button>
+        </div>
       </div>
       
       <div class="admin-form">
@@ -217,17 +268,17 @@
               
               <!-- Point ID Input -->
               <input 
-                v-model="editForm.elementIds[index]" 
+                v-model="editForm.elementIds[index + 1]" 
                 type="text" 
-                :placeholder="index === 0 ? 'From location (e.g., entrance)' : index === editForm.elementIds.length - 1 ? 'To location (e.g., office1)' : 'Stop point ID'"
+                :placeholder="index === 0 ? 'To location (e.g., office1)' : index === editForm.elementIds.length - 2 ? 'Final destination' : 'Stop point ID'"
                 class="admin-input admin-stop-input"
-                @input="syncElementIdToVisualPoint(index)"
+                @input="syncElementIdToVisualPoint(index + 1)"
               >
               
               <!-- X Coordinate -->
               <input 
-                :value="visualPoints[index]?.x ?? 0" 
-                @input="e => setVisualPointCoord(index, 'x', e.target.value)"
+                :value="visualPoints[index + 1]?.x ?? 0" 
+                @input="e => setVisualPointCoord(index + 1, 'x', e.target.value)"
                 type="number" 
                 placeholder="X"
                 class="admin-input admin-stop-input"
@@ -237,8 +288,8 @@
               
               <!-- Y Coordinate -->
               <input 
-                :value="visualPoints[index]?.y ?? 0" 
-                @input="e => setVisualPointCoord(index, 'y', e.target.value)"
+                :value="visualPoints[index + 1]?.y ?? 0" 
+                @input="e => setVisualPointCoord(index + 1, 'y', e.target.value)"
                 type="number" 
                 placeholder="Y"
                 class="admin-input admin-stop-input"
@@ -248,7 +299,7 @@
               
               <button 
                 class="admin-icon-btn admin-icon-btn-small" 
-                @click="moveStopUp(index)"
+                @click="moveStopUp(index + 1)"
                 :disabled="index === 0"
                 title="Move up"
               >
@@ -256,15 +307,15 @@
               </button>
               <button 
                 class="admin-icon-btn admin-icon-btn-small" 
-                @click="moveStopDown(index)"
-                :disabled="index === editForm.elementIds.length - 1"
+                @click="moveStopDown(index + 1)"
+                :disabled="index + 1 === editForm.elementIds.length - 1"
                 title="Move down"
               >
                 <span class="material-icons">arrow_downward</span>
               </button>
               <button 
                 class="admin-icon-btn admin-icon-btn-small admin-icon-btn-danger" 
-                @click="removeStop(index)"
+                @click="removeStop(index + 1)"
                 title="Remove"
               >
                 <span class="material-icons">remove_circle</span>
@@ -540,7 +591,8 @@
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </transition>
 
     <!-- Import/Export -->
     <div class="admin-section">
@@ -570,6 +622,16 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast Notification -->
+    <transition name="toast-fade">
+      <div v-if="showToast" class="admin-toast" :class="`toast-${toastType}`">
+        <span class="material-icons toast-icon">
+          {{ toastType === 'success' ? 'check_circle' : 'error' }}
+        </span>
+        <span class="toast-message">{{ toastMessage }}</span>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -590,6 +652,14 @@ const isCreatingNew = ref(false)
 const importFile = ref(null)
 const previewContainer = ref(null)
 const previewSvg = ref(null)
+const editorSection = ref(null)
+
+// From/To Hierarchical Structure
+const fromLocations = ref([]) // Array of From location names
+const selectedFromLocation = ref('') // Currently selected From location
+const routesFromSelected = ref([]) // Routes from the selected From location
+const selectedRouteIndex = ref(-1) // Currently selected route index
+
 // ViewBox as ref (not computed) so it can be set directly
 const previewViewBox = ref('0 0 3306 7159')
 const svgWidth = ref(3306)
@@ -602,6 +672,22 @@ const gridSize = ref(40) // Grid cell size in SVG units (40px for fine grid)
 // Interactive Editor State
 const editorMode = ref('view') // 'view', 'add', 'delete'
 const scale = ref(2) // Default to 200% for better visibility
+
+// Toast Notification State
+const toastMessage = ref('')
+const toastType = ref('success') // 'success', 'error'
+const showToast = ref(false)
+
+// Show toast notification
+const displayToast = (message, type = 'success', duration = 3000) => {
+  toastMessage.value = message
+  toastType.value = type
+  showToast.value = true
+  
+  setTimeout(() => {
+    showToast.value = false
+  }, duration)
+}
 const visualPoints = ref([]) // Array of {x, y, id} points
 const selectedPointIndex = ref(-1)
 const hoverPoint = ref(null)
@@ -674,7 +760,7 @@ const loadPaths = async () => {
 
 const loadMap = async () => {
   try {
-    const response = await fetch('SEAITMAP.svg')
+    const response = await fetch('Map_labeled.svg')
     if (!response.ok) throw new Error('Failed to load map')
     
     const svgText = await response.text()
@@ -922,7 +1008,7 @@ const createNewPath = () => {
 const editPath = (id) => {
   const path = pathManager.getPath(id)
   if (!path) return
-  
+
   isCreatingNew.value = false
   editingPathId.value = id
   editForm.value = {
@@ -933,7 +1019,7 @@ const editPath = (id) => {
     floor: path.floor || 1,
     elementIds: [...(path.elementIds || [])]
   }
-  
+
   // Load saved visualPoints if available, otherwise generate from elementIds
   nextTick(() => {
     if (path.visualPoints && path.visualPoints.length > 0) {
@@ -960,6 +1046,13 @@ const editPath = (id) => {
         }))
       pointCounter = visualPoints.value.length + 1
     }
+
+    // Scroll to editor section after loading
+    nextTick(() => {
+      if (editorSection.value) {
+        editorSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    })
   })
 }
 
@@ -1028,11 +1121,11 @@ const savePath = async (stayOpen = false) => {
     
     if (!stayOpen) {
       cancelEdit()
-      alert('Path saved successfully!')
+      displayToast('Path saved successfully!', 'success')
     }
   } catch (error) {
     console.error('[AdminPathManager] Failed to save path:', error)
-    alert('Failed to save path: ' + error.message)
+    displayToast('Failed to save path: ' + error.message, 'error')
   }
 }
 
@@ -1040,6 +1133,7 @@ const savePath = async (stayOpen = false) => {
 const saveAndAddAnother = async () => {
   // Save current path but stay open
   await savePath(true)
+  displayToast('Path saved! Creating another...', 'success')
   
   // Remember the FROM location (first point)
   const fromLocation = editForm.value.elementIds[0] || ''
@@ -1335,6 +1429,181 @@ watch([showGrid, gridSize], () => {
 watch([viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight], ([x, y, w, h]) => {
   previewViewBox.value = `${x} ${y} ${w} ${h}`
 }, { immediate: true })
+
+// ============================================
+// FROM/TO HIERARCHICAL PATH MANAGEMENT
+// ============================================
+
+// Extract unique From locations from all paths
+const extractFromLocations = () => {
+  const fromSet = new Set()
+  paths.value.forEach(path => {
+    const from = path.from || (path.elementIds?.[0] || '')
+    if (from) fromSet.add(from)
+  })
+  fromLocations.value = Array.from(fromSet).sort()
+}
+
+// Watch paths to keep fromLocations updated
+watch(paths, () => {
+  extractFromLocations()
+}, { deep: true })
+
+// Get all routes (To destinations) for a given From location
+const getRoutesForFromLocation = (fromLocation) => {
+  return paths.value.filter(path => {
+    const pathFrom = path.from || (path.elementIds?.[0] || '')
+    return pathFrom === fromLocation
+  }).map(path => ({
+    id: path.id,
+    to: path.to || (path.elementIds?.[path.elementIds.length - 1] || ''),
+    name: path.name,
+    elementIds: path.elementIds || [],
+    visualPoints: path.visualPoints || []
+  }))
+}
+
+// Select a From location and load its routes
+const selectFromLocation = (fromLocation) => {
+  selectedFromLocation.value = fromLocation
+  routesFromSelected.value = getRoutesForFromLocation(fromLocation)
+  selectedRouteIndex.value = -1
+  
+  // Reset edit form
+  editForm.value = {
+    name: '',
+    description: '',
+    facility: '',
+    room: '',
+    floor: 1,
+    elementIds: [fromLocation]
+  }
+  visualPoints.value = []
+  
+  console.log('[AdminPathManager] Selected From location:', fromLocation, 'Routes:', routesFromSelected.value.length)
+}
+
+// Delete a From location (and all its routes)
+const deleteFromLocation = async (fromLocation) => {
+  const routes = getRoutesForFromLocation(fromLocation)
+  if (routes.length > 0) {
+    if (!confirm(`Delete "${fromLocation}" and all ${routes.length} routes from it?`)) return
+    
+    // Delete all routes for this From location
+    for (const route of routes) {
+      await pathManager.deletePath(route.id)
+    }
+  }
+  
+  // Remove from list
+  fromLocations.value = fromLocations.value.filter(loc => loc !== fromLocation)
+  
+  if (selectedFromLocation.value === fromLocation) {
+    selectedFromLocation.value = ''
+    routesFromSelected.value = []
+  }
+  
+  await loadPaths()
+}
+
+// Add a new route (To destination) for the selected From location
+const addRoute = () => {
+  if (!selectedFromLocation.value) {
+    alert('Please select a From location first')
+    return
+  }
+  
+  isCreatingNew.value = true
+  selectedRouteIndex.value = -1
+  
+  // Initialize with From location as first point
+  editForm.value = {
+    name: `${selectedFromLocation.value} to New Destination`,
+    description: '',
+    facility: '',
+    room: '',
+    floor: 1,
+    elementIds: [selectedFromLocation.value, '']
+  }
+  
+  visualPoints.value = [
+    { id: selectedFromLocation.value, x: 0, y: 0 },
+    { id: '', x: 0, y: 0 }
+  ]
+  
+  editorMode.value = 'add'
+  nextTick(() => {
+    if (editorSection.value) {
+      editorSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  })
+}
+
+// Select a specific route to edit
+const selectRoute = (index) => {
+  selectedRouteIndex.value = index
+  const route = routesFromSelected.value[index]
+  
+  if (!route) return
+  
+  // Find the full path data
+  const fullPath = paths.value.find(p => p.id === route.id)
+  if (!fullPath) return
+  
+  isCreatingNew.value = false
+  editingPathId.value = route.id
+  
+  // Load the route data
+  editForm.value = {
+    name: fullPath.name,
+    description: fullPath.description,
+    facility: fullPath.facility || '',
+    room: fullPath.room || '',
+    floor: fullPath.floor || 1,
+    elementIds: [...(fullPath.elementIds || [])]
+  }
+  
+  // Load visual points
+  if (fullPath.visualPoints && fullPath.visualPoints.length > 0) {
+    visualPoints.value = fullPath.visualPoints.map((p, index) => ({
+      id: p.id || fullPath.elementIds[index] || `point_${index}`,
+      x: p.x,
+      y: p.y
+    }))
+  } else {
+    syncFromElementIds()
+  }
+  
+  updatePreview()
+}
+
+// Delete a specific route
+const deleteRoute = async (index) => {
+  const route = routesFromSelected.value[index]
+  if (!route) return
+  
+  if (!confirm(`Delete route to "${route.to}"?`)) return
+  
+  await pathManager.deletePath(route.id)
+  await loadPaths()
+  
+  // Refresh routes list
+  routesFromSelected.value = getRoutesForFromLocation(selectedFromLocation.value)
+  
+  if (editingPathId.value === route.id) {
+    cancelEdit()
+  }
+}
+
+// Get unique To destinations (for autocomplete)
+const uniqueToDestinations = computed(() => {
+  const toSet = new Set()
+  paths.value.forEach(path => {
+    const to = path.to || (path.elementIds?.[path.elementIds.length - 1] || '')
+    if (to) toSet.add(to)
+  })
+  return Array.from(toSet).sort()
+})
 
 // Lifecycle
 onMounted(async () => {
@@ -2050,5 +2319,555 @@ onMounted(async () => {
 
 .admin-interactive-preview:active {
   cursor: grabbing;
+}
+
+/* ============================================
+   VUE TRANSITION CLASSES
+   ============================================ */
+
+/* Fade Transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Fade Up Transition */
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-up-enter-from,
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Slide Fade Transition */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Slide Up Transition */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* Slide Editor Transition */
+.slide-editor-enter-active,
+.slide-editor-leave-active {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-editor-enter-from {
+  opacity: 0;
+  transform: translateX(50px);
+}
+
+.slide-editor-leave-to {
+  opacity: 0;
+  transform: translateX(-50px);
+}
+
+/* List Transitions */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.4s ease;
+}
+
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.list-move {
+  transition: transform 0.4s ease;
+}
+
+/* ============================================
+   FROM/TO HIERARCHICAL PATH MANAGEMENT STYLES
+   ============================================ */
+
+/* Animation Keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.header-actions .admin-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header-actions .admin-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+}
+
+.header-actions .admin-btn:active {
+  transform: translateY(0);
+}
+
+/* From Locations Grid */
+.admin-from-locations {
+  margin-top: 20px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.from-locations-header {
+  margin-bottom: 16px;
+  animation: slideInRight 0.4s ease-out;
+}
+
+.from-locations-header h4 {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.from-locations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+/* Staggered animation for grid items */
+.from-location-card:nth-child(1) { animation: fadeInUp 0.4s ease-out 0.1s both; }
+.from-location-card:nth-child(2) { animation: fadeInUp 0.4s ease-out 0.15s both; }
+.from-location-card:nth-child(3) { animation: fadeInUp 0.4s ease-out 0.2s both; }
+.from-location-card:nth-child(4) { animation: fadeInUp 0.4s ease-out 0.25s both; }
+.from-location-card:nth-child(5) { animation: fadeInUp 0.4s ease-out 0.3s both; }
+.from-location-card:nth-child(6) { animation: fadeInUp 0.4s ease-out 0.35s both; }
+
+.from-location-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  transform-origin: center;
+}
+
+.from-location-card:hover {
+  border-color: #1976d2;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.2);
+  transform: translateY(-3px) scale(1.02);
+}
+
+.from-location-card.is-selected {
+  border-color: #1976d2;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  box-shadow: 0 4px 20px rgba(25, 118, 210, 0.25);
+  transform: scale(1.02);
+  animation: pulse-scale 0.6s ease-out;
+}
+
+.from-location-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.from-location-card:hover .from-location-icon {
+  transform: rotate(10deg) scale(1.1);
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+}
+
+.from-location-icon .material-icons {
+  color: #4caf50;
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.from-location-card:hover .from-location-icon .material-icons {
+  transform: scale(1.2);
+}
+
+.from-location-info {
+  flex: 1;
+}
+
+.from-location-info h5 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.route-count {
+  font-size: 12px;
+  color: #666;
+}
+
+.delete-from-btn {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.from-location-card:hover .delete-from-btn {
+  opacity: 1;
+}
+
+/* Routes Section */
+.admin-routes-section {
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.routes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.routes-header h4 {
+  margin: 0;
+  font-size: 16px;
+  animation: slideInRight 0.4s ease-out;
+}
+
+.routes-header .admin-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.routes-header .admin-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+/* Routes List */
+.routes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Staggered animation for route items */
+.route-item:nth-child(1) { animation: slideInRight 0.3s ease-out 0.05s both; }
+.route-item:nth-child(2) { animation: slideInRight 0.3s ease-out 0.1s both; }
+.route-item:nth-child(3) { animation: slideInRight 0.3s ease-out 0.15s both; }
+.route-item:nth-child(4) { animation: slideInRight 0.3s ease-out 0.2s both; }
+.route-item:nth-child(5) { animation: slideInRight 0.3s ease-out 0.25s both; }
+.route-item:nth-child(6) { animation: slideInRight 0.3s ease-out 0.3s both; }
+.route-item:nth-child(7) { animation: slideInRight 0.3s ease-out 0.35s both; }
+.route-item:nth-child(8) { animation: slideInRight 0.3s ease-out 0.4s both; }
+
+.route-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left center;
+}
+
+.route-item:hover {
+  border-color: #1976d2;
+  background: linear-gradient(135deg, #f5f9ff 0%, #e3f2fd 100%);
+  transform: translateX(8px);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+}
+
+.route-item.is-editing {
+  border-color: #1976d2;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.2);
+  transform: translateX(8px) scale(1.01);
+}
+
+.route-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
+}
+
+.route-item:hover .route-number {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 8px rgba(25, 118, 210, 0.4);
+}
+
+.route-info {
+  flex: 1;
+}
+
+.route-from-to {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.from-label {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.arrow {
+  color: #999;
+}
+
+.to-label {
+  color: #2196f3;
+  font-weight: 500;
+}
+
+.route-details {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.route-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.route-actions .admin-icon-btn {
+  transition: all 0.2s ease;
+}
+
+.route-actions .admin-icon-btn:hover {
+  transform: scale(1.15);
+}
+
+.route-actions .admin-icon-btn-danger:hover {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0) scale(1.15); }
+  25% { transform: translateX(-3px) scale(1.15); }
+  75% { transform: translateX(3px) scale(1.15); }
+}
+
+/* Editor Header Content */
+.editor-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editor-header-content h3 {
+  margin: 0;
+}
+
+.route-context {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.from-badge, .to-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.from-badge {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.to-badge {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .from-locations-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .routes-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .route-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .route-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Toast Notification */
+.admin-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideInRight 0.3s ease-out;
+}
+
+.admin-toast.toast-success {
+  background: #4caf50;
+  color: white;
+}
+
+.admin-toast.toast-error {
+  background: #f44336;
+  color: white;
+}
+
+.toast-icon {
+  font-size: 24px;
+}
+
+.toast-message {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Toast Transition */
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-fade-enter-from {
+  opacity: 0;
+  transform: translateX(100px);
+}
+
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translateX(100px);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 </style>

@@ -39,8 +39,11 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  // Show splash on first session visit to /
-  if (to.path === '/' && !localStorage.getItem('tp_splash_v1') && from.path !== '/splash') {
+  // Show splash only when directly accessing home (initial load/refresh)
+  // NOT when navigating from other pages like /navigate, /settings, etc.
+  // from.matched.length === 0 means no previous route (initial load)
+  const isInitialLoad = from.matched.length === 0
+  if (to.path === '/' && isInitialLoad) {
     next('/splash')
     return
   }

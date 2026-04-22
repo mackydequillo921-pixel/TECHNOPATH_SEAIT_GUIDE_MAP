@@ -51,9 +51,7 @@ function formatTime(ts) {
 function formatScope(scope) {
   const labels = {
     'campus_wide': 'Entire Campus',
-    'all_college': 'All College Students',
-    'basic_ed_only': 'Basic Education Only',
-    'department': 'Specific Department'
+    'all_college': 'Normal admin',
   }
   return labels[scope] || scope
 }

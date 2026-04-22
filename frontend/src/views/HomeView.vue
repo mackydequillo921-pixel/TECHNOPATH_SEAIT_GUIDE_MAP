@@ -151,7 +151,7 @@
       <div class="desktop-fab-container">
         <button class="desktop-fab-btn desktop-notification-btn" @click="goToNotifications" title="Notifications">
           <span class="material-icons">notifications</span>
-          <span v-if="notificationCount > 0" class="notification-badge">{{ notificationCount > 99 ? '99+' : notificationCount }}</span>
+          <span v-if="unreadNotifications > 0" class="notification-badge">{{ unreadNotifications > 99 ? '99+' : unreadNotifications }}</span>
         </button>
         <button class="desktop-fab-btn desktop-ratings-btn" @click="openRateApp" title="Ratings & Feedback">
           <span class="material-icons">star</span>
@@ -183,18 +183,24 @@
             </div>
             <span>Building Information</span>
           </div>
-          <div class="menu-item" @click="goToRoomsInfo">
-            <div class="menu-item-icon">
-              <span class="material-icons">meeting_room</span>
-            </div>
-            <span>Rooms Info</span>
-          </div>
           <div class="menu-divider"></div>
-          <div class="menu-item" @click="openRateApp">
+          <div class="menu-item" @click="openLink('https://www.facebook.com/profile.php?id=61559175458971')">
             <div class="menu-item-icon">
-              <span class="material-icons">star</span>
+              <span class="material-icons">local_police</span>
             </div>
-            <span>Rate App</span>
+            <span>Safety Office & Security</span>
+          </div>
+          <div class="menu-item" @click="openLink('https://www.facebook.com/search/top?q=silakbo')">
+            <div class="menu-item-icon">
+              <span class="material-icons">group</span>
+            </div>
+            <span>Silakbo</span>
+          </div>
+          <div class="menu-item" @click="openLink('https://www.facebook.com/SEAITOfficial')">
+            <div class="menu-item-icon">
+              <span class="material-icons">school</span>
+            </div>
+            <span>SEAIT Official</span>
           </div>
         </div>
         <div class="menu-sheet-footer">
@@ -1126,6 +1132,8 @@ const goToAdmin = () => { showMenu.value = false; router.push('/admin') }
 const goToNavGraph = () => { showMenu.value = false; router.push({ path: '/admin', query: { section: 'navigation' } }) }
 
 const openRateApp = () => { showMenu.value = false; showRating.value = true }
+
+const openLink = (url) => { showMenu.value = false; window.open(url, '_blank') }
 
 
 

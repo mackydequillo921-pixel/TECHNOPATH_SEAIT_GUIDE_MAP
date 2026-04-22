@@ -39,7 +39,7 @@
           <button v-if="!isMobile && auth.canManageNavigation"
                   :class="navCls('paths')" @click="go('paths')">
             <span class="material-icons tp-nav-icon">route</span>
-            <span>SVG Paths</span>
+            <span>AdminPathManager</span>
           </button>
 
           <button v-if="!isMobile && auth.canManageFAQ"
@@ -141,35 +141,37 @@
 
     <!-- Main content area -->
     <main class="tp-admin-main">
+      <transition name="admin-section" mode="out-in">
+        <div :key="section" class="admin-section-wrapper">
+          <AdminDashboard        v-if="section === 'dashboard'" />
+          
+          <div v-else-if="isMobile && blockedOnMobile(section)" class="tp-access-denied">
+            <span class="material-icons">computer</span>
+            <h2>Desktop Required</h2>
+            <p>This feature requires a desktop screen to manage effectively.</p>
+          </div>
 
-      <AdminDashboard        v-if="section === 'dashboard'" />
-      
-      <div v-else-if="isMobile && blockedOnMobile(section)" class="tp-access-denied">
-        <span class="material-icons">computer</span>
-        <h2>Desktop Required</h2>
-        <p>This feature requires a desktop screen to manage effectively.</p>
-      </div>
+          <AdminFacilities       v-else-if="section === 'facilities'  && auth.canManageFacilities" />
+          <AdminRooms            v-else-if="section === 'rooms'       && (auth.canManageAllRooms || auth.canManageOwnRooms)"
+                                 :own-only="!auth.canManageAllRooms"
+                                 :dept="auth.department" />
+          <AdminPathManager      v-else-if="section === 'paths'       && auth.canManageNavigation" />
+          <AdminFAQ              v-else-if="section === 'faq'         && auth.canManageFAQ" />
+          <AdminAnnouncements    v-else-if="section === 'announcements' && auth.canPostAnnouncement"
+                                 @my-pending="myPendingCount = $event" />
+          <AdminPendingApprovals v-else-if="section === 'pending'     && auth.canApproveAnnouncements"
+                                 @count="pendingCount = $event" />
+          <AdminSendNotification v-else-if="section === 'notifications' && auth.canSendCampusNotification" />
+          <AdminAccounts         v-else-if="section === 'admins'      && auth.canManageAdminAccounts" />
+          <AdminFeedback         v-else-if="section === 'feedback'    && (auth.canViewAllFeedback || auth.canViewDeptFeedback)" />
+          <AdminAuditLog         v-else-if="section === 'auditlog'    && auth.canViewAuditLog" />
 
-      <AdminFacilities       v-else-if="section === 'facilities'  && auth.canManageFacilities" />
-      <AdminRooms            v-else-if="section === 'rooms'       && (auth.canManageAllRooms || auth.canManageOwnRooms)"
-                             :own-only="!auth.canManageAllRooms"
-                             :dept="auth.department" />
-      <AdminPathManager      v-else-if="section === 'paths'       && auth.canManageNavigation" />
-      <AdminFAQ              v-else-if="section === 'faq'         && auth.canManageFAQ" />
-      <AdminAnnouncements    v-else-if="section === 'announcements' && auth.canPostAnnouncement"
-                             @my-pending="myPendingCount = $event" />
-      <AdminPendingApprovals v-else-if="section === 'pending'     && auth.canApproveAnnouncements"
-                             @count="pendingCount = $event" />
-      <AdminSendNotification v-else-if="section === 'notifications' && auth.canSendCampusNotification" />
-      <AdminAccounts         v-else-if="section === 'admins'      && auth.canManageAdminAccounts" />
-      <AdminFeedback         v-else-if="section === 'feedback'    && (auth.canViewAllFeedback || auth.canViewDeptFeedback)" />
-      <AdminAuditLog         v-else-if="section === 'auditlog'    && auth.canViewAuditLog" />
-
-      <div v-else class="tp-access-denied">
-        <span class="material-icons">lock</span>
-        <p>You do not have permission to access this section.</p>
-      </div>
-
+          <div v-else class="tp-access-denied">
+            <span class="material-icons">lock</span>
+            <p>You do not have permission to access this section.</p>
+          </div>
+        </div>
+      </transition>
     </main>
 
     <!-- Sign-out Confirmation Modal -->
@@ -696,6 +698,50 @@ function handleAdminNavigate(e) {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Admin Section Transitions */
+.admin-section-wrapper {
+  width: 100%;
+}
+
+.admin-section-enter-active,
+.admin-section-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-section-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.admin-section-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+/* Navigation item active animation */
+.tp-sidebar-nav-item {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tp-sidebar-nav-item.active {
+  animation: navPulse 0.3s ease;
+}
+
+@keyframes navPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* Collapse/Expand animations */
+.tp-nav-group-items {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tp-collapse-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Desktop Responsive adjustments */
