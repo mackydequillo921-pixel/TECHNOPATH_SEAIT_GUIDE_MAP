@@ -72,10 +72,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'technopath.wsgi.application'
 
+# Database configuration - supports Render persistent disk
+import os
+DATABASE_PATH = config('DATABASE_URL', default=f'sqlite:///{BASE_DIR}/technopath.db').replace('sqlite:///', '')
+if DATABASE_PATH.startswith('/data/'):
+    # Use Render persistent disk path
+    DB_NAME = DATABASE_PATH
+else:
+    DB_NAME = BASE_DIR / 'technopath.db'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'technopath.db',
+        'NAME': DB_NAME,
     }
 }
 
@@ -104,16 +113,9 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    'http://localhost:4173',
-    'http://localhost:4174',
-    'http://localhost:4175',
-    'http://localhost:4176',
-    'http://localhost:4177',
-]
+# CORS - support Render frontend
+_cors_origins = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173,http://localhost:3000')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_origins.split(',')]
 CORS_ALLOW_CREDENTIALS = True
 
 STATIC_URL = '/static/'
