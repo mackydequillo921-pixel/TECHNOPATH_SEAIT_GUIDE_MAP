@@ -3,9 +3,9 @@
 
 services:
   # Frontend - Vue.js Static Site
-  - type: static
+  - type: web
     name: technopath-frontend
-    runtime: node
+    runtime: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
     envVars:
