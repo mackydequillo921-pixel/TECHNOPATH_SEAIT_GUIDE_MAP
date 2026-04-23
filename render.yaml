@@ -1,5 +1,5 @@
-# Render Blueprint for TechnoPath SEAIT Guide Map - v2
-# Deploys: Frontend (Static Site) + Backend (Web Service) + Database (SQLite on Disk)
+# Render Blueprint for TechnoPath SEAIT Guide Map - v3
+# Deploys: Frontend (Static Site) + Backend (Web Service) + PostgreSQL Database
 
 services:
   # Frontend - Vue.js Static Site
@@ -36,15 +36,12 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         value: "https://technopath-frontend.onrender.com,http://localhost:5173"
       - key: DATABASE_URL
-        value: sqlite:///data/technopath.db
-    disk:
-      name: technopath-data
-      mountPath: /data
-      sizeGB: 1
+        fromDatabase:
+          name: technopath-db
+          property: connectionString
 
-# Optional: PostgreSQL Database (uncomment to use instead of SQLite)
-# databases:
-#   - name: technopath-db
-#     plan: free
-#     databaseName: technopath
-#     user: technopath
+databases:
+  - name: technopath-db
+    plan: free
+    databaseName: technopath
+    user: technopath
