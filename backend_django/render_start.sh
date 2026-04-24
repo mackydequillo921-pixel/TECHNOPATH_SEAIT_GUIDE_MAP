@@ -9,6 +9,10 @@ python manage.py migrate --run-syncdb
 echo "Seeding default admin accounts..."
 python manage.py seed_admins
 
+# Seed all facilities, rooms, navigation nodes, FAQ entries, etc.
+echo "Seeding default campus data..."
+python manage.py seed_default_data
+
 # Static files already collected during build
 # Start gunicorn
 echo "Starting Gunicorn..."
