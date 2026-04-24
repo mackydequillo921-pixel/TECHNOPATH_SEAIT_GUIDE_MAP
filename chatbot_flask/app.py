@@ -303,9 +303,11 @@ def chat():
     return jsonify({"reply": reply})
 
 
+# Initialize DB on module load (for Gunicorn production)
+init_db()
+
 if __name__ == "__main__":
-    # Initialize DB on startup
-    init_db()
-    # Use PORT from environment (Render) or default to 5187
+    # Development server only
     port = int(os.environ.get('PORT', 5187))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
