@@ -303,4 +303,6 @@ def chat():
 if __name__ == "__main__":
     # Initialize DB on startup
     init_db()
-    app.run(host="0.0.0.0", port=5187, debug=True)
+    # Use PORT from environment (Render) or default to 5187
+    port = int(os.environ.get('PORT', 5187))
+    app.run(host="0.0.0.0", port=port, debug=True)

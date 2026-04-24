@@ -34,3 +34,17 @@ services:
         value: "https://technopath-frontend-or73.onrender.com,https://technopath-frontend.onrender.com,http://localhost:5173"
       - key: DATABASE_URL
         value: sqlite:///tmp/technopath.db
+
+  # Chatbot - Flask Web Service
+  - type: web
+    name: technopath-chatbot
+    runtime: python
+    plan: free
+    rootDir: chatbot_flask
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: FLASK_PORT
+        value: "5187"
