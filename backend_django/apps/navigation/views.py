@@ -524,11 +524,25 @@ class NavigationPathsView(APIView):
         try:
             data = request.data.copy()
             
+            # Validate required fields
+            if not data.get('name') or str(data.get('name')).strip() == '':
+                return Response(
+                    {'error': 'Path name is required', 'field': 'name'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             # Remove null facility/room if they don't exist
             if 'facility' in data and data['facility'] is None:
                 del data['facility']
             if 'room' in data and data['room'] is None:
                 del data['room']
+            
+            # Ensure element_ids is a list
+            if 'element_ids' in data and not isinstance(data['element_ids'], list):
+                return Response(
+                    {'error': 'element_ids must be an array', 'field': 'element_ids'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
             serializer = PathSerializer(data=data)
             if serializer.is_valid():
