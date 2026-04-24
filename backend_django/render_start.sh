@@ -5,9 +5,6 @@
 echo "Running migrations..."
 python manage.py migrate --run-syncdb
 
-# Create superuser if it doesn't exist (optional - for initial setup)
-echo "from apps.users.models import AdminUser; AdminUser.objects.filter(username='admin').exists() or AdminUser.objects.create_superuser('admin', 'admin123', email='admin@example.com')" | python manage.py shell
-
 # Seed all default admin accounts (safety_admin, all deans, all program heads)
 echo "Seeding default admin accounts..."
 python manage.py seed_admins
