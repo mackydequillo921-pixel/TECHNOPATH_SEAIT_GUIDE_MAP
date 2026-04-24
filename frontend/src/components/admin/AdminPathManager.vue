@@ -152,37 +152,15 @@
           ></textarea>
         </div>
 
-        <div class="admin-form-row">
-          <div class="admin-form-group">
-            <label>Facility</label>
-            <input 
-              v-model="editForm.facility" 
-              type="text" 
-              placeholder="e.g., SEAIT Building"
-              class="admin-input"
-            >
-          </div>
-
-          <div class="admin-form-group">
-            <label>Room</label>
-            <input 
-              v-model="editForm.room" 
-              type="text" 
-              placeholder="e.g., Room 101"
-              class="admin-input"
-            >
-          </div>
-
-          <div class="admin-form-group">
-            <label>Floor</label>
-            <input 
-              v-model.number="editForm.floor" 
-              type="number" 
-              placeholder="e.g., 1"
-              min="1"
-              class="admin-input"
-            >
-          </div>
+        <div class="admin-form-group">
+          <label>Floor</label>
+          <input 
+            v-model.number="editForm.floor" 
+            type="number" 
+            placeholder="e.g., 1"
+            min="1"
+            class="admin-input"
+          >
         </div>
 
         <div class="admin-form-group">
