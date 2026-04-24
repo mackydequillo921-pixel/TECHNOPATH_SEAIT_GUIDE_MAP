@@ -138,16 +138,22 @@ class PathManager {
 
   // Convert internal format to API format
   toApiFormat(pathData) {
-    return {
+    const result = {
       id: pathData.id,
       name: pathData.name,
       description: pathData.description,
-      facility: pathData.facility || null,
-      room: pathData.room || null,
       floor: pathData.floor || 1,
       points_input: pathData.points || [],
       element_ids: pathData.elementIds || []
     }
+    // Only include facility/room if they have actual values
+    if (pathData.facility && pathData.facility.trim && pathData.facility.trim() !== '') {
+      result.facility = pathData.facility
+    }
+    if (pathData.room && pathData.room.trim && pathData.room.trim() !== '') {
+      result.room = pathData.room
+    }
+    return result
   }
 
   // Get all paths as array

@@ -524,6 +524,9 @@ class NavigationPathsView(APIView):
         try:
             data = request.data.copy()
             
+            # Log incoming data for debugging
+            print(f"[Path Create] Incoming data: {data}")
+            
             # Validate required fields
             if not data.get('name') or str(data.get('name')).strip() == '':
                 return Response(
@@ -531,11 +534,11 @@ class NavigationPathsView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Remove null facility/room if they don't exist
-            if 'facility' in data and data['facility'] is None:
-                del data['facility']
-            if 'room' in data and data['room'] is None:
-                del data['room']
+            # Clean up facility/room - remove if None, empty string, or missing
+            for field in ['facility', 'room']:
+                if field in data:
+                    if data[field] is None or data[field] == '':
+                        del data[field]
             
             # Ensure element_ids is a list
             if 'element_ids' in data and not isinstance(data['element_ids'], list):
@@ -544,12 +547,19 @@ class NavigationPathsView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            # Ensure element_ids exists
+            if 'element_ids' not in data:
+                data['element_ids'] = []
+            
             serializer = PathSerializer(data=data)
             if serializer.is_valid():
                 # Set created_by from request user
                 created_by = request.user if request.user.is_authenticated else None
                 serializer.save(created_by=created_by)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            # Log validation errors
+            print(f"[Path Create] Validation errors: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             import traceback
