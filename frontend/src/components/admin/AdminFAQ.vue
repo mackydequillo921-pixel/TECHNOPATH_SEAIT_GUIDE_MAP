@@ -630,9 +630,28 @@ async function loadAnalytics() {
   try {
     // Call Flask chatbot analytics - use full URL from env or fallback
     const chatbotUrl = import.meta.env.VITE_FLASK_CHATBOT_URL || 'https://technopath-chatbot-dyod.onrender.com'
+    console.log('[Analytics] Fetching from:', `${chatbotUrl}/analytics?days=${analyticsDays.value}`)
+    
     const res = await fetch(`${chatbotUrl}/analytics?days=${analyticsDays.value}`)
-    if (!res.ok) throw new Error('Failed to fetch analytics')
+    console.log('[Analytics] Response status:', res.status, res.statusText)
+    
+    if (!res.ok) {
+      const text = await res.text()
+      console.error('[Analytics] Error response:', text.substring(0, 200))
+      throw new Error(`Failed to fetch analytics: ${res.status}`)
+    }
+    
+    const contentType = res.headers.get('content-type')
+    console.log('[Analytics] Content-Type:', contentType)
+    
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await res.text()
+      console.error('[Analytics] Non-JSON response:', text.substring(0, 200))
+      throw new Error('Response is not JSON')
+    }
+    
     analytics.value = await res.json()
+    console.log('[Analytics] Loaded successfully:', analytics.value)
   } catch (error) {
     console.error('Error loading analytics from chatbot:', error)
     // Fallback: try Django backend
