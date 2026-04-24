@@ -394,12 +394,12 @@ const toLocations = computed(() => {
     return p.from === fromLocation.value
   })
   
-  // Extract unique destination IDs from these paths
+  // Extract unique destination IDs from these paths - ONLY final destination
   const destinationIds = new Set()
   pathsFromSelected.forEach(p => {
     if (p.elementIds && p.elementIds.length >= 2) {
-      // Add all destinations except the first one (which is the From)
-      p.elementIds.slice(1).forEach(id => destinationIds.add(id))
+      // Only add the LAST element (final destination), not intermediate cell points
+      destinationIds.add(p.elementIds[p.elementIds.length - 1])
     }
     // Also check the 'to' field if it exists
     if (p.to) {
