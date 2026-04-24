@@ -628,8 +628,9 @@ async function loadSuggestions() {
 
 async function loadAnalytics() {
   try {
-    // Call Flask chatbot via proxy for analytics
-    const res = await fetch(`/chatbot-api/analytics?days=${analyticsDays.value}`)
+    // Call Flask chatbot analytics - use full URL from env or fallback
+    const chatbotUrl = import.meta.env.VITE_FLASK_CHATBOT_URL || 'https://technopath-chatbot-dyod.onrender.com'
+    const res = await fetch(`${chatbotUrl}/analytics?days=${analyticsDays.value}`)
     if (!res.ok) throw new Error('Failed to fetch analytics')
     analytics.value = await res.json()
   } catch (error) {
@@ -640,6 +641,7 @@ async function loadAnalytics() {
       analytics.value = res.data
     } catch (fallbackError) {
       console.error('Fallback also failed:', fallbackError)
+      analytics.value = null
     }
   }
 }
