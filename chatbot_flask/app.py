@@ -43,8 +43,11 @@ CORS(app, origins=[
     "http://localhost:4173",  # Vite preview
     "http://127.0.0.1:5173",
     "http://127.0.0.1:4173",
-    # Production domains - add your deployed URLs here
-    # "https://yourdomain.com",
+    # Production domains
+    "https://technopath-frontend-or73.onrender.com",
+    "https://technopath-frontend-dyod.onrender.com",
+    "https://technopath-backend-or73.onrender.com",
+    "https://technopath-backend-dyod.onrender.com",
 ], supports_credentials=True)
 DB_PATH = Path(__file__).parent / "chatbot.db"
 
