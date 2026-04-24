@@ -8,7 +8,7 @@ services:
     runtime: node
     plan: free
     buildCommand: cd frontend && rm -rf dist node_modules/.vite && npm install && npm run build
-    startCommand: cd frontend/dist && npx serve -p $PORT
+    startCommand: cd frontend/dist && npx serve -s . -p $PORT
     envVars:
       - key: VITE_API_BASE_URL
         value: https://technopath-backend.onrender.com/api
