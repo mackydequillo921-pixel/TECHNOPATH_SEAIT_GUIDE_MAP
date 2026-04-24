@@ -60,15 +60,10 @@
           <div v-if="selectedFromLocation" class="admin-routes-section">
           <div class="routes-header">
             <h4>Routes from "{{ selectedFromLocation }}"</h4>
-            <button class="admin-btn admin-btn-primary" @click="addRoute">
-              <span class="material-icons">add_road</span>
-              Add Route
-            </button>
           </div>
 
           <div v-if="routesFromSelected.length === 0" class="admin-empty">
             No routes created yet from {{ selectedFromLocation }}.
-            <br>Click "Add Route" to create a path to a destination.
           </div>
 
           <div v-else class="routes-list">
