@@ -260,27 +260,26 @@ class PathManager {
     }
   }
 
-  // Delete a path via API
+  // Delete a path via API (or localStorage only for local paths)
   async deletePath(id) {
-    try {
-      await api.delete(`/navigation/paths/${id}/`)
-      // Use reactive assignment to trigger Vue updates
-      const newPaths = { ...this.paths.value }
-      delete newPaths[id]
-      this.paths.value = newPaths
-      this.saveToStorage() // Also remove from localStorage
-      return true
-    } catch (error) {
-      console.warn('API failed, deleting from localStorage:', error)
-      // Fallback to localStorage
-      this.useApi.value = false
-      // Use reactive assignment to trigger Vue updates
-      const newPaths = { ...this.paths.value }
-      delete newPaths[id]
-      this.paths.value = newPaths
-      this.saveToStorage()
-      return true
+    // Check if this is a localStorage-only path (IDs like "path_1777002534903")
+    const isLocalPath = id.startsWith('path_') && /path_\d+/.test(id)
+    
+    if (!isLocalPath) {
+      // Only try API for database paths
+      try {
+        await api.delete(`/navigation/paths/${id}/`)
+      } catch (error) {
+        console.warn('API delete failed:', error.message)
+      }
     }
+    
+    // Always remove from localStorage and reactive state
+    const newPaths = { ...this.paths.value }
+    delete newPaths[id]
+    this.paths.value = newPaths
+    this.saveToStorage()
+    return true
   }
 
   // Get element positions from SVG or visualPoints (for admin panel)
