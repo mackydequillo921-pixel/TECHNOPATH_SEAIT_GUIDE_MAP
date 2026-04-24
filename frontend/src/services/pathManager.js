@@ -218,7 +218,7 @@ class PathManager {
     }
   }
 
-  // Update an existing path via API
+  // Update an existing path via API (or localStorage only for local paths)
   async updatePath(id, updates) {
     // Get current path outside try block
     const currentPath = this.paths.value[id]
@@ -226,38 +226,44 @@ class PathManager {
       throw new Error(`Path with ID ${id} not found`)
     }
     
-    try {
-      const apiData = this.toApiFormat({
-        ...currentPath,
-        ...updates,
-        id
-      })
-      
-      const response = await api.put(`/navigation/paths/${id}/`, apiData)
-      let updatedPath = this.normalizePath(response.data)
-      // Preserve visualPoints if API doesn't return them
-      if ((!updatedPath.visualPoints || updatedPath.visualPoints.length === 0) && updates.visualPoints) {
-        updatedPath = { ...updatedPath, visualPoints: updates.visualPoints }
+    // Check if this is a localStorage-only path (IDs like "path_1777007321556")
+    const isLocalPath = id.startsWith('path_') && /path_\d+/.test(id)
+    
+    if (!isLocalPath) {
+      // Only try API for database paths
+      try {
+        const apiData = this.toApiFormat({
+          ...currentPath,
+          ...updates,
+          id
+        })
+        
+        const response = await api.put(`/navigation/paths/${id}/`, apiData)
+        let updatedPath = this.normalizePath(response.data)
+        // Preserve visualPoints if API doesn't return them
+        if ((!updatedPath.visualPoints || updatedPath.visualPoints.length === 0) && updates.visualPoints) {
+          updatedPath = { ...updatedPath, visualPoints: updates.visualPoints }
+        }
+        // Use reactive assignment to trigger Vue updates
+        this.paths.value = { ...this.paths.value, [updatedPath.id]: updatedPath }
+        this.saveToStorage() // Also save to localStorage
+        return updatedPath
+      } catch (error) {
+        console.warn('API update failed:', error.message)
       }
-      // Use reactive assignment to trigger Vue updates
-      this.paths.value = { ...this.paths.value, [updatedPath.id]: updatedPath }
-      this.saveToStorage() // Also save to localStorage
-      return updatedPath
-    } catch (error) {
-      console.warn('API failed, saving to localStorage:', error)
-      // Fallback to localStorage - preserve visualPoints!
-      this.useApi.value = false
-      const updatedPath = {
-        ...currentPath,
-        ...updates,
-        visualPoints: updates.visualPoints || currentPath.visualPoints || [],
-        updatedAt: new Date().toISOString()
-      }
-      // Use reactive assignment to trigger Vue updates
-      this.paths.value = { ...this.paths.value, [id]: updatedPath }
-      this.saveToStorage()
-      return updatedPath
     }
+    
+    // For local paths or API failures - save to localStorage only
+    const updatedPath = {
+      ...currentPath,
+      ...updates,
+      visualPoints: updates.visualPoints || currentPath.visualPoints || [],
+      updatedAt: new Date().toISOString()
+    }
+    // Use reactive assignment to trigger Vue updates
+    this.paths.value = { ...this.paths.value, [id]: updatedPath }
+    this.saveToStorage()
+    return updatedPath
   }
 
   // Delete a path via API (or localStorage only for local paths)
