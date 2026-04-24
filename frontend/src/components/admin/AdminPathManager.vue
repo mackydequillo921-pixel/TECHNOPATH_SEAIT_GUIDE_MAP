@@ -683,8 +683,6 @@ const rooms = ref([])
 const editForm = ref({
   name: '',
   description: '',
-  facility: '',
-  room: '',
   floor: 1,
   elementIds: []
 })
@@ -968,8 +966,6 @@ const createNewPath = () => {
   editForm.value = {
     name: '',
     description: '',
-    facility: '',
-    room: '',
     floor: 1,
     elementIds: ['']
   }
@@ -987,8 +983,6 @@ const editPath = (id) => {
   editForm.value = {
     name: path.name,
     description: path.description,
-    facility: path.facility || '',
-    room: path.room || '',
     floor: path.floor || 1,
     elementIds: [...(path.elementIds || [])]
   }
@@ -1119,8 +1113,6 @@ const saveAndAddAnother = async () => {
   editForm.value = {
     name: '',
     description: '',
-    facility: '',
-    room: '',
     floor: 1,
     elementIds: fromLocation ? [fromLocation] : ['']
   }
@@ -1175,7 +1167,7 @@ const duplicatePath = async (id) => {
 const cancelEdit = () => {
   editingPathId.value = null
   isCreatingNew.value = false
-  editForm.value = { name: '', description: '', facility: '', room: '', floor: 1, elementIds: [] }
+  editForm.value = { name: '', description: '', floor: 1, elementIds: [] }
   previewPositions.value = []
   visualPoints.value = []
 }
@@ -1444,8 +1436,6 @@ const selectFromLocation = (fromLocation) => {
   editForm.value = {
     name: '',
     description: '',
-    facility: '',
-    room: '',
     floor: 1,
     elementIds: [fromLocation]
   }
@@ -1491,8 +1481,6 @@ const addRoute = () => {
   editForm.value = {
     name: `${selectedFromLocation.value} to New Destination`,
     description: '',
-    facility: '',
-    room: '',
     floor: 1,
     elementIds: [selectedFromLocation.value, '']
   }
@@ -1528,8 +1516,6 @@ const selectRoute = (index) => {
   editForm.value = {
     name: fullPath.name,
     description: fullPath.description,
-    facility: fullPath.facility || '',
-    room: fullPath.room || '',
     floor: fullPath.floor || 1,
     elementIds: [...(fullPath.elementIds || [])]
   }
