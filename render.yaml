@@ -7,7 +7,7 @@ services:
     name: technopath-frontend
     runtime: node
     plan: free
-    buildCommand: cd frontend && npm install && npx rimraf dist && npm run build
+    buildCommand: cd frontend && rm -rf dist node_modules/.vite && npm install && npm run build
     startCommand: cd frontend/dist && npx serve -p $PORT
     envVars:
       - key: VITE_API_BASE_URL
