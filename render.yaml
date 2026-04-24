@@ -11,7 +11,7 @@ services:
     startCommand: cd frontend/dist && npx serve -s . -p $PORT
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://technopath-backend.onrender.com/api
+        value: https://technopath-backend-or73.onrender.com/api
 
   # Backend - Django Web Service
   - type: web
