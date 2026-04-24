@@ -1068,8 +1068,6 @@ const savePath = async (stayOpen = false) => {
     const pathData = {
       name: editForm.value.name || 'Unnamed Path',
       description: editForm.value.description,
-      facility: editForm.value.facility,
-      room: editForm.value.room,
       floor: editForm.value.floor,
       from: elementIds[0] || '',
       to: elementIds[elementIds.length - 1] || '',
