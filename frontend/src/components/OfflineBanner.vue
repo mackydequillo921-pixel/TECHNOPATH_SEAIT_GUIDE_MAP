@@ -1,12 +1,16 @@
 <template>
   <div v-if="show" class="offline-banner" :class="{ 'offline': !isOnline, 'stale': isOnline && isStale }">
-    <span class="material-icons offline-icon">
-      {{ !isOnline ? 'wifi_off' : 'update' }}
-    </span>
-    <span class="offline-text">
-      {{ message }}
-    </span>
-    <button v-if="!isOnline" class="offline-dismiss" @click="dismiss">
+    <div class="offline-icon-wrap">
+      <span class="material-icons offline-icon">
+        {{ !isOnline ? 'wifi_off' : 'update' }}
+      </span>
+      <span v-if="!isOnline" class="offline-pulse"></span>
+    </div>
+    <div class="offline-content">
+      <span class="offline-title">{{ !isOnline ? 'Offline Mode' : 'Cached Data' }}</span>
+      <span class="offline-text">{{ message }}</span>
+    </div>
+    <button v-if="!isOnline" class="offline-dismiss" @click="dismiss" title="Dismiss">
       <span class="material-icons">close</span>
     </button>
   </div>
@@ -85,22 +89,23 @@ onUnmounted(() => {
   z-index: 10000;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 12px;
+  padding: 10px 16px;
   font-size: 13px;
   font-weight: 500;
-  transition: all 0.3s ease;
-  min-height: 36px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 44px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(8px);
 }
 
 .offline-banner.offline {
-  background: #D32F2F;
+  background: linear-gradient(135deg, #D32F2F 0%, #B71C1C 100%);
   color: white;
 }
 
 .offline-banner.stale {
-  background: #FF9800;
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
   color: white;
 }
 
@@ -108,30 +113,84 @@ onUnmounted(() => {
   display: none;
 }
 
-.offline-icon {
-  font-size: 18px;
-}
-
-.offline-text {
-  flex: 1;
-  text-align: center;
-}
-
-.offline-dismiss {
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  padding: 4px;
+.offline-icon-wrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.8;
-  transition: opacity 0.2s;
+  width: 28px;
+  height: 28px;
+}
+
+.offline-icon {
+  font-size: 20px;
+  z-index: 2;
+}
+
+.offline-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  animation: pulse-ring 2s ease-out infinite;
+  z-index: 1;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.offline-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+}
+
+.offline-title {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.offline-text {
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.2;
+}
+
+.offline-dismiss {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
+  transition: all 0.2s ease;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
 }
 
 .offline-dismiss:hover {
   opacity: 1;
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.offline-dismiss:active {
+  transform: scale(0.95);
 }
 
 .offline-dismiss .material-icons {
@@ -141,8 +200,24 @@ onUnmounted(() => {
 /* Adjust for safe areas on mobile */
 @supports (padding-top: env(safe-area-inset-top)) {
   .offline-banner {
-    padding-top: calc(8px + env(safe-area-inset-top));
-    min-height: calc(36px + env(safe-area-inset-top));
+    padding-top: calc(10px + env(safe-area-inset-top));
+    min-height: calc(44px + env(safe-area-inset-top));
   }
+}
+
+/* Slide in animation */
+@keyframes slideInDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.offline-banner {
+  animation: slideInDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

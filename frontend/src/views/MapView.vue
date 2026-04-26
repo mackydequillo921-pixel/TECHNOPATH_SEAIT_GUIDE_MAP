@@ -37,6 +37,12 @@
       </button>
     </div>
 
+    <!-- Offline Indicator -->
+    <div v-if="isOffline" class="mapview-offline-badge">
+      <span class="material-icons">wifi_off</span>
+      <span>Offline Mode</span>
+    </div>
+
     <!-- Filter chips -->
     <div class="mapview-filters">
       <button 

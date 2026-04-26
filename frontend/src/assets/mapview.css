@@ -194,6 +194,50 @@ body.dark-mode .mapview-marker-label {
   border-bottom: 1px solid var(--color-border);
 }
 
+/* ── Offline Badge ─────────────────────────────────────────── */
+
+.mapview-offline-badge {
+  position: absolute;
+  top: calc(56px + var(--safe-top) + var(--space-3));
+  left: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #FF6B35 0%, #F55747 100%);
+  color: white;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+  z-index: 100;
+  animation: slideInLeft 0.3s ease-out, pulse-glow 2s ease-in-out infinite;
+}
+
+.mapview-offline-badge .material-icons {
+  font-size: 16px;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 16px rgba(255, 107, 53, 0.5);
+  }
+}
+
 /* ── Filter Chips ─────────────────────────────────────────── */
 
 .mapview-filters {
