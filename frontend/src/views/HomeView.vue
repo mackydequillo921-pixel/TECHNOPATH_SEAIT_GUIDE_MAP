@@ -94,9 +94,9 @@
         </div>
       </div>
 
-      <!-- Interactive Campus Map -->
+      <!-- Campus Map -->
       <div class="seait-map-section">
-        <h2 class="seait-map-title">Interactive Campus Map</h2>
+        <h2 class="seait-map-title">Campus Map</h2>
         <div class="map-wrapper seait-embedded-map">
           <div class="map-container"
             ref="mapContainer"

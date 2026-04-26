@@ -164,7 +164,7 @@
             
             <h4 style="margin: 20px 0 12px; color: var(--text-primary);">Key Features:</h4>
             <ul style="color: var(--text-primary); line-height: 1.8; margin: 0; padding-left: 20px;">
-              <li>Interactive campus map with building navigation</li>
+              <li>Campus map with building navigation</li>
               <li>Room and facility locator</li>
               <li>AI-powered chatbot assistant</li>
               <li>Real-time announcements and notifications</li>
