@@ -135,8 +135,13 @@ class FAQMakerAnalyzeView(APIView):
         
         if not all_queries:
             return Response({
-                'message': 'No unanswered queries found in the specified period',
-                'suggestions_created': 0
+                'message': 'No unanswered queries found in the specified period. Try using the chatbot first with questions it cannot answer, then run analysis again.',
+                'suggestions_created': 0,
+                'debug_info': {
+                    'days_analyzed': days,
+                    'flask_connected': False,
+                    'django_logs_checked': True
+                }
             })
         
         # Group similar queries
@@ -148,7 +153,9 @@ class FAQMakerAnalyzeView(APIView):
         suggestions_created = 0
         
         for group in query_groups:
-            if len(group['queries']) >= min_query_count:
+            # Allow even single queries (min_query_count now defaults to 1 in UI)
+            query_count = len(group['queries'])
+            if query_count >= min_query_count:
                 # Check if similar suggestion already exists
                 existing = FAQSuggestion.objects.filter(
                     suggested_question__icontains=group['common_pattern'][:50],
@@ -160,6 +167,7 @@ class FAQMakerAnalyzeView(APIView):
                     suggestion = self._generate_suggestion(group)
                     FAQSuggestion.objects.create(**suggestion)
                     suggestions_created += 1
+                    print(f"Created suggestion: {suggestion['suggested_question'][:50]}... ({query_count} queries)")
         
         return Response({
             'message': f'Analysis complete. Created {suggestions_created} new FAQ suggestions.',
@@ -208,7 +216,8 @@ class FAQMakerAnalyzeView(APIView):
                     group['keywords'] = group['keywords'] & other_keywords
                     processed.add(j)
             
-            if len(group['queries']) >= 2:
+            # Allow single queries to be suggested (was requiring 2+)
+            if len(group['queries']) >= 1:
                 groups.append(group)
             processed.add(i)
         

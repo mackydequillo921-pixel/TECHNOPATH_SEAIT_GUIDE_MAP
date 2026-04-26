@@ -478,7 +478,7 @@ const analysisResult = ref(null)
 
 // Analysis controls
 const analyzeDays = ref(7)
-const minQueryCount = ref(2)
+const minQueryCount = ref(1)
 const similarityThreshold = ref(0.7)
 
 const form = ref({
