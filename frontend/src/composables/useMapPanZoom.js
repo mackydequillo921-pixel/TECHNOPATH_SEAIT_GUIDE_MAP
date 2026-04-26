@@ -8,8 +8,9 @@ export function useMapPanZoom(options = {}) {
   const {
     minScale = 0.2,
     maxScale = 5,
-    zoomStep = 1.3,
-    defaultScale = 1
+    zoomStep = 1.2,
+    defaultScale = 1,
+    pinchDampening = 0.5
   } = options
 
   // Transform state
@@ -67,17 +68,36 @@ export function useMapPanZoom(options = {}) {
     isPanning.value = false
   }
 
-  // Wheel zoom
+  // Wheel zoom with threshold to prevent accidental zooms
+  const WHEEL_THRESHOLD = 10
+  let accumulatedDelta = 0
+
   function onWheel(e) {
-    if (e.deltaY < 0) {
-      zoomIn()
-    } else {
-      zoomOut()
+    // Ignore very small movements
+    if (Math.abs(e.deltaY) < 3) return
+
+    accumulatedDelta += e.deltaY
+
+    // Only zoom after threshold is crossed
+    if (Math.abs(accumulatedDelta) > WHEEL_THRESHOLD) {
+      if (accumulatedDelta < 0) {
+        zoomIn()
+      } else {
+        zoomOut()
+      }
+      accumulatedDelta = 0
     }
+
+    // Reset accumulated delta after a delay
+    clearTimeout(window.wheelTimeout)
+    window.wheelTimeout = setTimeout(() => {
+      accumulatedDelta = 0
+    }, 150)
   }
 
   // Touch pinch zoom
   let lastTouchDist = 0
+  let lastTouchTime = 0
 
   function onTouchStart(e) {
     if (e.touches.length === 2) {
@@ -85,6 +105,7 @@ export function useMapPanZoom(options = {}) {
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       )
+      lastTouchTime = Date.now()
     } else if (e.touches.length === 1) {
       onPointerDown(e)
     }
@@ -92,12 +113,20 @@ export function useMapPanZoom(options = {}) {
 
   function onTouchMove(e) {
     if (e.touches.length === 2) {
+      // Throttle pinch zoom updates to every 50ms
+      const now = Date.now()
+      if (now - lastTouchTime < 50) return
+      lastTouchTime = now
+
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       )
       if (lastTouchDist > 0) {
-        const newScale = scale.value * (dist / lastTouchDist)
+        // Apply dampening to reduce sensitivity
+        const ratio = dist / lastTouchDist
+        const dampenedRatio = 1 + (ratio - 1) * pinchDampening
+        const newScale = scale.value * dampenedRatio
         setScale(newScale)
       }
       lastTouchDist = dist
