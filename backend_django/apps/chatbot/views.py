@@ -100,7 +100,9 @@ class FAQMakerAnalyzeView(APIView):
         
         # Try to get failed queries from Flask chatbot analytics
         try:
-            flask_url = f"http://localhost:5187/analytics?days={days}"
+            import os
+            flask_base_url = os.environ.get('FLASK_CHATBOT_URL', 'https://technopath-chatbot-dyod.onrender.com')
+            flask_url = f"{flask_base_url}/analytics?days={days}"
             print(f"Calling Flask analytics: {flask_url}")
             flask_response = requests.get(flask_url, timeout=10)
             if flask_response.status_code == 200:
