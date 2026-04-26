@@ -29,10 +29,10 @@
 
     <!-- Zoom Controls -->
     <div class="mapview-zoom">
-      <button @click="zoomIn" class="mapview-zoom-btn" title="Zoom In">
+      <button @click="handleZoomIn" class="mapview-zoom-btn" :class="{ clicked: zoomInClicked }" title="Zoom In">
         <span class="material-icons">add</span>
       </button>
-      <button @click="zoomOut" class="mapview-zoom-btn" title="Zoom Out">
+      <button @click="handleZoomOut" class="mapview-zoom-btn" :class="{ clicked: zoomOutClicked }" title="Zoom Out">
         <span class="material-icons">remove</span>
       </button>
     </div>
@@ -143,6 +143,23 @@ const router = useRouter()
 
 const isOffline = ref(false)
 const lastSync = ref(null)
+
+// Zoom button click states for ripple effect
+const zoomInClicked = ref(false)
+const zoomOutClicked = ref(false)
+
+// Zoom handlers with smooth animation and ripple
+function handleZoomIn() {
+  zoomInClicked.value = true
+  zoomIn()
+  setTimeout(() => zoomInClicked.value = false, 400)
+}
+
+function handleZoomOut() {
+  zoomOutClicked.value = true
+  zoomOut()
+  setTimeout(() => zoomOutClicked.value = false, 400)
+}
 
 // Map state
 const canvasRef = ref(null)

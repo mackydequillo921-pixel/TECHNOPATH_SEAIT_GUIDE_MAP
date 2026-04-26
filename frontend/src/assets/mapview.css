@@ -73,7 +73,7 @@
   width: fit-content;
   height: fit-content;
   will-change: transform;
-  transition: none;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mapview-svg {
@@ -166,32 +166,99 @@ body.dark-mode .mapview-marker-label {
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
   z-index: 10;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
+  padding: 4px;
 }
 
 .mapview-zoom-btn {
-  width: 44px;
-  height: 44px;
-  background: var(--color-bg);
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(145deg, var(--color-bg) 0%, var(--color-surface) 100%);
   border: none;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--color-text-primary);
-  transition: background var(--duration-fast) var(--ease-out);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.mapview-zoom-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 107, 53, 0.15) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .mapview-zoom-btn:hover {
-  background: var(--color-surface);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(145deg, var(--color-surface) 0%, var(--color-bg) 100%);
 }
 
-.mapview-zoom-btn:first-child {
-  border-bottom: 1px solid var(--color-border);
+.mapview-zoom-btn:hover::before {
+  opacity: 1;
+}
+
+.mapview-zoom-btn:active {
+  transform: translateY(0) scale(0.95);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.mapview-zoom-btn .material-icons {
+  font-size: 24px;
+  transition: transform 0.2s ease;
+}
+
+.mapview-zoom-btn:hover .material-icons {
+  transform: scale(1.1);
+}
+
+.mapview-zoom-btn:active .material-icons {
+  transform: scale(0.9);
+}
+
+/* Zoom button ripple effect */
+@keyframes zoomRipple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.mapview-zoom-btn.clicked::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 107, 53, 0.3);
+  animation: zoomRipple 0.4s ease-out;
+}
+
+/* Floating animation for zoom controls */
+@keyframes floatZoom {
+  0%, 100% {
+    transform: translateY(-50%) translateY(0);
+  }
+  50% {
+    transform: translateY(-50%) translateY(-4px);
+  }
+}
+
+.mapview-zoom {
+  animation: floatZoom 4s ease-in-out infinite;
 }
 
 /* ── Offline Badge ─────────────────────────────────────────── */
