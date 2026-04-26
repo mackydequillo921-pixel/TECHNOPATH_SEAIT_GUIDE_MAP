@@ -263,6 +263,16 @@
         <p>Loading map...</p>
         <p v-if="mapError" class="svg-map-error">{{ mapError }}</p>
       </div>
+
+      <!-- Zoom Controls -->
+      <div class="nav-zoom-controls">
+        <button @click="zoomIn" class="nav-zoom-btn" title="Zoom In">
+          <span class="material-icons">add</span>
+        </button>
+        <button @click="zoomOut" class="nav-zoom-btn" title="Zoom Out">
+          <span class="material-icons">remove</span>
+        </button>
+      </div>
     </div>
 
     <!-- Floating Action Buttons - Positioned above bottom nav -->
@@ -2165,6 +2175,117 @@ onUnmounted(() => {
 
   .nav-fab-btn .material-icons {
     font-size: 24px;
+  }
+}
+
+/* ── Zoom Controls ────────────────────────────────────────── */
+
+.nav-zoom-controls {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+  padding: 4px;
+}
+
+.nav-zoom-btn {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 248, 248, 0.95) 100%);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+
+.nav-zoom-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 107, 53, 0.2) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-zoom-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 1) 0%, rgba(240, 240, 240, 1) 100%);
+}
+
+.nav-zoom-btn:hover::before {
+  opacity: 1;
+}
+
+.nav-zoom-btn:active {
+  transform: translateY(0) scale(0.95);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.nav-zoom-btn .material-icons {
+  font-size: 24px;
+  transition: transform 0.2s ease;
+}
+
+.nav-zoom-btn:hover .material-icons {
+  transform: scale(1.1);
+}
+
+/* Floating animation for zoom controls */
+@keyframes floatZoomNav {
+  0%, 100% {
+    transform: translateY(-50%) translateY(0);
+  }
+  50% {
+    transform: translateY(-50%) translateY(-4px);
+  }
+}
+
+.nav-zoom-controls {
+  animation: floatZoomNav 4s ease-in-out infinite;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .nav-zoom-controls {
+    right: 12px;
+  }
+  
+  .nav-zoom-btn {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .nav-zoom-btn .material-icons {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-zoom-controls {
+    right: 8px;
+    gap: 6px;
+  }
+  
+  .nav-zoom-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .nav-zoom-btn .material-icons {
+    font-size: 20px;
   }
 }
 </style>
