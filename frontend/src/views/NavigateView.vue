@@ -1185,25 +1185,37 @@ const loadNavigationData = async () => {
     
     // Check if we actually got data
     if (pathCount === 0 && locations.value.length === 0) {
-      if (loadAttempts.value < 3) {
-        // Retry after 2 seconds (backend might be waking up)
+      if (loadAttempts.value < 2) {
+        // Retry once after 2 seconds (backend might be waking up)
         console.log('[NavigateView] No data received, retrying...')
         setTimeout(() => loadNavigationData(), 2000)
         return
       } else {
-        loadingError.value = 'No navigation data available. Please check your connection or try again later.'
+        loadingError.value = 'No navigation data available. Please log in or try again later.'
       }
     }
   } catch (error) {
     console.error('[NavigateView] Failed to load paths:', error)
     
-    if (loadAttempts.value < 3) {
-      // Retry after 2 seconds
-      console.log('[NavigateView] Error loading, retrying...')
+    // Check if it's a 401 Unauthorized error - don't retry, just show login message
+    if (error.response?.status === 401) {
+      loadingError.value = 'Please log in to access navigation data.'
+      isLoading.value = false
+      return // Don't retry on 401
+    }
+    
+    // Only retry on network errors or 5xx server errors (not 401)
+    const shouldRetry = error.response?.status >= 500 || !error.response
+    
+    if (shouldRetry && loadAttempts.value < 2) {
+      // Retry once after 2 seconds for server/network errors only
+      console.log('[NavigateView] Server error, retrying...')
       setTimeout(() => loadNavigationData(), 2000)
       return
     } else {
-      loadingError.value = 'Failed to load navigation data. The server may be starting up. Please try refreshing the page.'
+      loadingError.value = error.response?.status === 401 
+        ? 'Please log in to access navigation data.'
+        : 'Failed to load navigation data. Please check your connection and try again.'
     }
   } finally {
     isLoading.value = false
