@@ -295,10 +295,11 @@
               </button>
             </div>
             
-            <button class="admin-btn admin-btn-secondary" @click="addStop">
+            <button class="admin-btn admin-btn-secondary" @click="addStop" :disabled="!editForm.elementIds[0]?.trim()">
               <span class="material-icons">add_location</span>
-              Path Stops (Enter Point IDs)
+              Add TO Location
             </button>
+            <p class="add-stop-hint" v-if="!editForm.elementIds[0]?.trim()">Enter a FROM location first</p>
           </div>
         </div>
 
@@ -2082,6 +2083,14 @@ onMounted(async () => {
 .admin-btn-small {
   padding: 6px 12px;
   font-size: 12px;
+}
+
+/* Add TO Location hint */
+.add-stop-hint {
+  font-size: 12px;
+  color: #FF9800;
+  margin: 4px 0 0 0;
+  font-style: italic;
 }
 
 .admin-preview-svg.clickable-mode {
