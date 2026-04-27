@@ -1124,16 +1124,23 @@ const saveAndAddAnotherTo = async (route) => {
 
 // Save path and add another TO location while staying in editor
 const saveAndAddAnotherToFromEditor = async () => {
+  // Remember the FROM location before saving
+  const fromLocation = editForm.value.elementIds[0] || ''
+  
   // Save current path
   await savePath(true)
   
-  // Add new empty TO location
-  editForm.value.elementIds.push('')
-  visualPoints.value.push({ 
-    id: '', 
-    x: 500 + (visualPoints.value.length % 3) * 80, 
-    y: 5000 + Math.floor(visualPoints.value.length / 3) * 80 
-  })
+  // Reset Building Name, Description, and Floor for new route
+  editForm.value.name = ''
+  editForm.value.description = ''
+  editForm.value.floor = 1
+  
+  // Reset to just FROM and empty TO
+  editForm.value.elementIds = fromLocation ? [fromLocation, ''] : ['']
+  visualPoints.value = [
+    { id: fromLocation, x: visualPoints.value[0]?.x || 0, y: visualPoints.value[0]?.y || 0 },
+    { id: '', x: 0, y: 0 }
+  ]
   
   // Focus and scroll to new input
   await nextTick()
