@@ -972,16 +972,46 @@ const createNewPath = () => {
   isCreatingNew.value = true
   editingPathId.value = 'new'
   pointCounter = 1
-  visualPoints.value = [{ id: '', x: 0, y: 0 }]
   selectedPointIndex.value = -1
-  editForm.value = {
-    name: '',
-    description: '',
-    floor: 1,
-    elementIds: ['']
+  
+  // If a FROM location is selected, pre-fill it
+  if (selectedFromLocation.value) {
+    editForm.value = {
+      name: `${selectedFromLocation.value} to New Destination`,
+      description: '',
+      floor: 1,
+      elementIds: [selectedFromLocation.value, ''] // FROM pre-filled, TO empty
+    }
+    visualPoints.value = [
+      { id: selectedFromLocation.value, x: 0, y: 0 },
+      { id: '', x: 0, y: 0 } // Empty TO field ready for input
+    ]
+  } else {
+    // No FROM selected, start with empty fields
+    editForm.value = {
+      name: '',
+      description: '',
+      floor: 1,
+      elementIds: ['', ''] // Both FROM and TO empty
+    }
+    visualPoints.value = [
+      { id: '', x: 0, y: 0 }, // Empty FROM
+      { id: '', x: 0, y: 0 }  // Empty TO
+    ]
   }
+  
   previewPositions.value = []
   editorMode.value = 'add' // Start in add mode for new paths
+  
+  // Focus on TO field (or FROM field if no FROM selected)
+  nextTick(() => {
+    const inputs = document.querySelectorAll('.admin-stop-input')
+    if (inputs.length > 1) {
+      inputs[inputs.length - 1].focus() // Focus on last field (TO)
+    } else if (inputs.length === 1) {
+      inputs[0].focus()
+    }
+  })
 }
 
 // Edit an existing path - preserve saved point positions
