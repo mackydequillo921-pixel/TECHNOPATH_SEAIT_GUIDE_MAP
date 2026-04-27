@@ -70,9 +70,20 @@
         <p class="svg-nav-hint">Go to Admin Panel → Map Management → SVG Paths to create paths first.</p>
       </div>
 
-      <div v-else-if="locations.length === 0" class="svg-nav-empty">
-        <span class="material-icons" style="font-size: 48px; color: #ccc;">refresh</span>
-        <p>Loading navigation paths...</p>
+      <div v-else-if="locations.length === 0 || isLoading" class="svg-nav-empty">
+        <span class="material-icons" style="font-size: 48px; color: #FF9800;">
+          {{ isLoading ? 'refresh' : 'cloud_off' }}
+        </span>
+        <p>{{ isLoading ? 'Loading navigation data...' : (loadingError || 'Waiting for server...') }}</p>
+        <p v-if="isLoading" class="svg-nav-hint">First visit may take 30-60 seconds while server wakes up</p>
+        <button 
+          v-if="loadingError || !isLoading" 
+          @click="loadNavigationData" 
+          class="svg-nav-retry-btn"
+        >
+          <span class="material-icons">refresh</span>
+          Try Again
+        </button>
       </div>
 
       <template v-else>
@@ -407,6 +418,11 @@ const zoomLevel = ref(1)
 const rotation = ref(0)
 const pathPositions = ref([])
 const unreadCount = ref(0)
+
+// Loading state for new devices
+const isLoading = ref(false)
+const loadingError = ref('')
+const loadAttempts = ref(0)
 
 // Rating dialog state
 const showRating = ref(false)
@@ -1145,19 +1161,54 @@ onMounted(async () => {
   loadNotificationCount()
   
   // PRIORITY: Load paths immediately - this is what users need to see first
-  console.log('[NavigateView] Loading paths from API...')
+  await loadNavigationData()
+})
+
+// Load navigation data with retry logic for new devices
+const loadNavigationData = async () => {
+  isLoading.value = true
+  loadingError.value = ''
+  loadAttempts.value++
+  
+  console.log('[NavigateView] Loading paths from API... (attempt', loadAttempts.value, ')')
+  
   try {
     await pathManager.loadPaths()
-    console.log('[NavigateView] Paths loaded:', Object.keys(pathManager.getAllPaths()).length)
+    const pathCount = Object.keys(pathManager.getAllPaths()).length
+    console.log('[NavigateView] Paths loaded:', pathCount)
+    
     // Extract locations immediately after paths load
     extractLocationsFromPaths()
     console.log('[NavigateView] Locations extracted:', locations.value.length)
     console.log('[NavigateView] From locations:', fromLocations.value.length)
     console.log('[NavigateView] To locations:', toLocations.value.length)
+    
+    // Check if we actually got data
+    if (pathCount === 0 && locations.value.length === 0) {
+      if (loadAttempts.value < 3) {
+        // Retry after 2 seconds (backend might be waking up)
+        console.log('[NavigateView] No data received, retrying...')
+        setTimeout(() => loadNavigationData(), 2000)
+        return
+      } else {
+        loadingError.value = 'No navigation data available. Please check your connection or try again later.'
+      }
+    }
   } catch (error) {
     console.error('[NavigateView] Failed to load paths:', error)
+    
+    if (loadAttempts.value < 3) {
+      // Retry after 2 seconds
+      console.log('[NavigateView] Error loading, retrying...')
+      setTimeout(() => loadNavigationData(), 2000)
+      return
+    } else {
+      loadingError.value = 'Failed to load navigation data. The server may be starting up. Please try refreshing the page.'
+    }
+  } finally {
+    isLoading.value = false
   }
-})
+}
 
 onUnmounted(() => {
   pathManager.stopNavigation()
@@ -1385,6 +1436,37 @@ onUnmounted(() => {
   font-size: 14px;
   color: #999;
   font-style: italic;
+}
+
+.svg-nav-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #FF9800 0%, #FF5722 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+.svg-nav-retry-btn:hover {
+  box-shadow: 0 6px 16px rgba(255, 152, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+.svg-nav-retry-btn:active {
+  transform: translateY(0);
+}
+
+.svg-nav-retry-btn .material-icons {
+  margin: 0;
+  font-size: 20px;
 }
 
 .svg-nav-actions {
