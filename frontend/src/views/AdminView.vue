@@ -64,13 +64,6 @@
             <span v-if="myPendingCount > 0" class="tp-nav-badge">{{ myPendingCount }}</span>
           </button>
 
-          <button v-if="auth.canApproveAnnouncements"
-                  :class="navCls('pending')" @click="go('pending')">
-            <span class="material-icons tp-nav-icon">pending_actions</span>
-            <span>Pending Approvals</span>
-            <span v-if="pendingCount > 0" class="tp-nav-badge tp-badge-urgent">{{ pendingCount }}</span>
-          </button>
-
           <button v-if="auth.canSendCampusNotification"
                   :class="navCls('notifications')" @click="go('notifications')">
             <span class="material-icons tp-nav-icon">notifications_active</span>
@@ -159,8 +152,6 @@
           <AdminFAQ              v-else-if="section === 'faq'         && auth.canManageFAQ" />
           <AdminAnnouncements    v-else-if="section === 'announcements' && auth.canPostAnnouncement"
                                  @my-pending="myPendingCount = $event" />
-          <AdminPendingApprovals v-else-if="section === 'pending'     && auth.canApproveAnnouncements"
-                                 @count="pendingCount = $event" />
           <AdminSendNotification v-else-if="section === 'notifications' && auth.canSendCampusNotification" />
           <AdminAccounts         v-else-if="section === 'admins'      && auth.canManageAdminAccounts" />
           <AdminFeedback         v-else-if="section === 'feedback'    && (auth.canViewAllFeedback || auth.canViewDeptFeedback)" />
@@ -204,7 +195,6 @@ import AdminRooms            from '../components/admin/AdminRooms.vue'
 import AdminPathManager      from '../components/admin/AdminPathManager.vue'
 import AdminFAQ              from '../components/admin/AdminFAQ.vue'
 import AdminAnnouncements    from '../components/admin/AdminAnnouncements.vue'
-import AdminPendingApprovals from '../components/admin/AdminPendingApprovals.vue'
 import AdminSendNotification from '../components/admin/AdminSendNotification.vue'
 import AdminAccounts         from '../components/admin/AdminAccounts.vue'
 import AdminFeedback         from '../components/admin/AdminFeedback.vue'

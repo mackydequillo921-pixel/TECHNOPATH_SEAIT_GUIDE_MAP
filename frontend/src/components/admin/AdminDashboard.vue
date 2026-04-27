@@ -26,16 +26,6 @@
         </div>
       </div>
 
-      <div class="stat-card stat-warning">
-        <div class="stat-icon">
-          <span class="material-icons">pending_actions</span>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ stats.pendingApprovals }}</div>
-          <div class="stat-label">Pending Approvals</div>
-        </div>
-      </div>
-
       <div class="stat-card stat-success">
         <div class="stat-icon">
           <span class="material-icons">people</span>
@@ -223,7 +213,6 @@ const auth = useAuthStore()
 
 const stats = ref({
   totalAnnouncements: 0,
-  pendingApprovals: 0,
   totalUsers: 0,
   newFeedback: 0
 })
@@ -271,14 +260,6 @@ async function loadDashboardData() {
   try {
     // Fetch multiple stats in parallel
     const promises = []
-    
-    if (auth.canApproveAnnouncements) {
-      promises.push(
-        api.get('/announcements/pending/')
-          .then(r => { stats.value.pendingApprovals = r.data.length })
-          .catch(() => { stats.value.pendingApprovals = 0 })
-      )
-    }
     
     if (auth.canPostAnnouncement) {
       promises.push(
