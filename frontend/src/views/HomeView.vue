@@ -228,29 +228,61 @@
       </div>
     </div>
 
-    <!-- Rating Dialog -->
-    <div v-if="showRating" class="modal-overlay" @click="showRating = false">
-      <div class="dialog" @click.stop>
-        <h3>Rate this App</h3>
-        <div class="star-rating">
-          <span
-            v-for="n in 5"
-            :key="n"
-            class="star material-icons"
-            :class="{ filled: n <= rating }"
-            @click="rating = n"
-          >
-            {{ n <= rating ? 'star' : 'star_border' }}
-          </span>
+    <!-- Rating Dialog - Full Feedback Form -->
+    <div v-if="showRating" class="modal-overlay feedback-modal" @click="showRating = false">
+      <div class="dialog feedback-dialog" @click.stop>
+        <h3>Submit Feedback</h3>
+        
+        <!-- Star Rating -->
+        <div class="feedback-section">
+          <h4>How would you rate your experience?</h4>
+          <div class="star-rating feedback-star-rating">
+            <button
+              v-for="n in 5"
+              :key="n"
+              class="star-btn"
+              :class="{ filled: n <= rating }"
+              @click="rating = n"
+            >
+              <span class="material-icons">{{ n <= rating ? 'star' : 'star_border' }}</span>
+            </button>
+          </div>
+          <p class="rating-text">{{ ratingText }}</p>
         </div>
-        <textarea
-          v-model="ratingComment"
-          placeholder="Leave a comment (optional)"
-          rows="3"
-        ></textarea>
+
+        <!-- Category Chips -->
+        <div class="feedback-section">
+          <h4>What is this about?</h4>
+          <div class="category-chips">
+            <button
+              v-for="cat in categories"
+              :key="cat"
+              class="chip"
+              :class="{ selected: category === cat }"
+              @click="category = cat"
+            >
+              {{ cat }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Comment -->
+        <div class="feedback-section">
+          <h4>Additional comments (optional)</h4>
+          <textarea
+            v-model="ratingComment"
+            class="feedback-textarea"
+            placeholder="Tell us more about your experience..."
+            rows="3"
+          ></textarea>
+        </div>
+
         <div class="dialog-actions">
           <button @click="showRating = false">Cancel</button>
-          <button class="primary" @click="submitRating">Submit</button>
+          <button class="primary" @click="submitRating" :disabled="!rating">
+            <span v-if="isSubmitting" class="spinner"></span>
+            <span v-else>Submit Feedback</span>
+          </button>
         </div>
       </div>
     </div>
@@ -318,9 +350,27 @@ const showMenu = ref(false)
 const showLocate = ref(false)
 const showRating = ref(false)
 const locateInput = ref('')
-const rating = ref(5)
+const rating = ref(0)
 const ratingComment = ref('')
+const category = ref('General')
+const isSubmitting = ref(false)
 const searchResults = ref([])
+
+const categories = ['General', 'Map Accuracy', 'Navigation', 'AI Chatbot', 'Bug Report']
+
+const ratingText = computed(() => {
+  const texts = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
+  return texts[rating.value] || ''
+})
+
+// Category mapping to backend values
+const categoryMap = {
+  'General': 'general',
+  'Map Accuracy': 'map_accuracy',
+  'Navigation': 'navigation',
+  'AI Chatbot': 'ai_chatbot',
+  'Bug Report': 'bug_report'
+}
 const recentSearches = ref([])
 const searchSuggestions = ref([])
 let searchDebounceTimer = null
@@ -817,41 +867,38 @@ const setLocation = () => {
 
 
 const showRatingDialog = () => {
-
-  rating.value = 5
-
+  rating.value = 0
   ratingComment.value = ''
-
+  category.value = 'General'
+  isSubmitting.value = false
   showRating.value = true
-
 }
 
 
 
 const submitRating = async () => {
-
+  if (!rating.value) return
+  
+  isSubmitting.value = true
+  
   try {
-
     await api.post('/core/ratings/', {
-
       rating: rating.value,
-
       comment: ratingComment.value,
-
-      category: 'app'
-
+      category: categoryMap[category.value] || 'general'
     })
-
+    
     showRating.value = false
-
-    showToast('Thank you for your rating!', 'success')
-
+    rating.value = 0
+    ratingComment.value = ''
+    category.value = 'General'
+    showToast('Thank you for your feedback!', 'success')
   } catch (error) {
-
     console.error('Error submitting rating:', error)
-
+    showToast('Failed to submit. Please try again.', 'error')
+  } finally {
+    isSubmitting.value = false
   }
-
 }
 
 

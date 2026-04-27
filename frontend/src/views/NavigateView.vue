@@ -326,29 +326,61 @@
 
   </div>
 
-  <!-- Rating Dialog -->
-  <div v-if="showRating" class="modal-overlay" @click="showRating = false">
-    <div class="dialog" @click.stop>
-      <h3>Rate this App</h3>
-      <div class="star-rating">
-        <span
-          v-for="n in 5"
-          :key="n"
-          class="star material-icons"
-          :class="{ filled: n <= rating }"
-          @click="rating = n"
-        >
-          {{ n <= rating ? 'star' : 'star_border' }}
-        </span>
+  <!-- Rating Dialog - Full Feedback Form -->
+  <div v-if="showRating" class="modal-overlay feedback-modal" @click="showRating = false">
+    <div class="dialog feedback-dialog" @click.stop>
+      <h3>Submit Feedback</h3>
+      
+      <!-- Star Rating -->
+      <div class="feedback-section">
+        <h4>How would you rate your experience?</h4>
+        <div class="star-rating feedback-star-rating">
+          <button
+            v-for="n in 5"
+            :key="n"
+            class="star-btn"
+            :class="{ filled: n <= rating }"
+            @click="rating = n"
+          >
+            <span class="material-icons">{{ n <= rating ? 'star' : 'star_border' }}</span>
+          </button>
+        </div>
+        <p class="rating-text">{{ ratingText }}</p>
       </div>
-      <textarea
-        v-model="ratingComment"
-        placeholder="Leave a comment (optional)"
-        rows="3"
-      ></textarea>
+
+      <!-- Category Chips -->
+      <div class="feedback-section">
+        <h4>What is this about?</h4>
+        <div class="category-chips">
+          <button
+            v-for="cat in categories"
+            :key="cat"
+            class="chip"
+            :class="{ selected: category === cat }"
+            @click="category = cat"
+          >
+            {{ cat }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Comment -->
+      <div class="feedback-section">
+        <h4>Additional comments (optional)</h4>
+        <textarea
+          v-model="ratingComment"
+          class="feedback-textarea"
+          placeholder="Tell us more about your experience..."
+          rows="3"
+        ></textarea>
+      </div>
+
       <div class="dialog-actions">
         <button @click="showRating = false">Cancel</button>
-        <button class="primary" @click="submitRating">Submit</button>
+        <button class="primary" @click="submitRating" :disabled="!rating">
+          <span v-if="isSubmitting" class="spinner"></span>
+          <span v-else>Submit Feedback</span>
+        </button>
       </div>
     </div>
   </div>
@@ -378,24 +410,49 @@ const unreadCount = ref(0)
 
 // Rating dialog state
 const showRating = ref(false)
-const rating = ref(5)
+const rating = ref(0)
 const ratingComment = ref('')
+const category = ref('General')
+const isSubmitting = ref(false)
+
+const categories = ['General', 'Map Accuracy', 'Navigation', 'AI Chatbot', 'Bug Report']
+
+const ratingText = computed(() => {
+  const texts = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
+  return texts[rating.value] || ''
+})
+
+// Category mapping to backend values
+const categoryMap = {
+  'General': 'general',
+  'Map Accuracy': 'map_accuracy',
+  'Navigation': 'navigation',
+  'AI Chatbot': 'ai_chatbot',
+  'Bug Report': 'bug_report'
+}
 
 // Submit rating
 const submitRating = async () => {
+  if (!rating.value) return
+  
+  isSubmitting.value = true
+  
   try {
     await api.post('/core/ratings/', {
       rating: rating.value,
       comment: ratingComment.value,
-      category: 'app'
+      category: categoryMap[category.value] || 'general'
     })
     showRating.value = false
-    rating.value = 5
+    rating.value = 0
     ratingComment.value = ''
-    alert('Thank you for your rating!')
+    category.value = 'General'
+    alert('Thank you for your feedback!')
   } catch (error) {
     console.error('Error submitting rating:', error)
-    alert('Failed to submit rating. Please try again.')
+    alert('Failed to submit feedback. Please try again.')
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -2434,5 +2491,137 @@ onUnmounted(() => {
 
 .dialog-actions button:hover {
   opacity: 0.9;
+}
+
+/* ============================================
+   FEEDBACK FORM STYLES - Full Form Modal
+   ============================================ */
+
+.feedback-modal .dialog {
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.feedback-dialog h3 {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #333;
+  font-size: 20px;
+}
+
+.feedback-section {
+  margin-bottom: 24px;
+}
+
+.feedback-section h4 {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+/* Star Rating */
+.feedback-star-rating {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.star-btn:hover {
+  transform: scale(1.1);
+}
+
+.star-btn .material-icons {
+  font-size: 40px;
+  color: #ddd;
+  transition: color 0.2s;
+}
+
+.star-btn.filled .material-icons {
+  color: #FFC107;
+}
+
+.rating-text {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+  min-height: 20px;
+}
+
+/* Category Chips */
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip:hover {
+  border-color: #FF9800;
+  color: #FF9800;
+}
+
+.chip.selected {
+  background: #FF9800;
+  color: white;
+  border-color: #FF9800;
+}
+
+/* Feedback Textarea */
+.feedback-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.feedback-textarea:focus {
+  outline: none;
+  border-color: #FF9800;
+  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.15);
+}
+
+/* Submit Button Spinner */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Dialog Actions */
+.dialog-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
