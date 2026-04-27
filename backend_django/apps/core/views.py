@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from apps.users.permissions import ReadOnlyOrSuperAdmin, CanViewAuditLog
 from .models import (
     Department, MapMarker, MapLabel,
@@ -18,6 +20,7 @@ from .serializers import (
 
 
 # Department Views
+@method_decorator(cache_page(60 * 5), name='list')  # Cache 5 minutes
 class DepartmentListCreateView(generics.ListCreateAPIView):
     queryset = Department.objects.filter(is_active=True)
     serializer_class = DepartmentSerializer
@@ -31,6 +34,7 @@ class DepartmentDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # Map Marker Views
+@method_decorator(cache_page(60 * 5), name='list')  # Cache 5 minutes
 class MapMarkerListCreateView(generics.ListCreateAPIView):
     queryset = MapMarker.objects.filter(is_active=True)
     serializer_class = MapMarkerSerializer
@@ -47,6 +51,7 @@ class MapMarkerDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # Map Label Views
+@method_decorator(cache_page(60 * 5), name='list')  # Cache 5 minutes
 class MapLabelListCreateView(generics.ListCreateAPIView):
     queryset = MapLabel.objects.filter(is_active=True)
     serializer_class = MapLabelSerializer

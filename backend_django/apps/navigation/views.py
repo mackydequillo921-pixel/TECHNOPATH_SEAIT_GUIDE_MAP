@@ -5,6 +5,8 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db import transaction
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 import json
 import os
 
@@ -257,6 +259,7 @@ class ImportMapView(APIView):
         })
 
 
+@method_decorator(cache_page(60 * 5), name='list')  # Cache 5 minutes
 class NavigationNodeListView(generics.ListCreateAPIView):
     queryset = NavigationNode.objects.filter(is_deleted=False)
     serializer_class = NavigationNodeSerializer
@@ -274,6 +277,7 @@ class NavigationNodeDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.save(update_fields=['is_deleted'])
 
 
+@method_decorator(cache_page(60 * 5), name='list')  # Cache 5 minutes
 class NavigationEdgeListView(generics.ListCreateAPIView):
     queryset = NavigationEdge.objects.filter(is_deleted=False)
     serializer_class = NavigationEdgeSerializer

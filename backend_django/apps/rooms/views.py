@@ -4,8 +4,11 @@ from .models import Room
 from .serializers import RoomSerializer
 from apps.users.permissions import CanManageRoom
 from apps.facilities.models import Facility
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 
 
+@method_decorator(cache_page(60 * 5), name='list')  # Cache 5 minutes
 class RoomListView(generics.ListCreateAPIView):
     queryset = Room.objects.filter(is_deleted=False)
     serializer_class = RoomSerializer
