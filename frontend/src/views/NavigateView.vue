@@ -1033,28 +1033,23 @@ watch(toLocation, () => {
 
 // Lifecycle
 onMounted(async () => {
-  // Load map and paths in parallel for faster startup
-  const loadMapPromise = loadMap()
-  const loadPathsPromise = pathManager.loadPaths()
-  
+  // Start loading map in background (don't wait for it)
+  loadMap()
   loadNotificationCount()
   
+  // PRIORITY: Load paths immediately - this is what users need to see first
   console.log('[NavigateView] Loading paths from API...')
   try {
-    await loadPathsPromise
+    await pathManager.loadPaths()
     console.log('[NavigateView] Paths loaded:', Object.keys(pathManager.getAllPaths()).length)
     // Extract locations immediately after paths load
     extractLocationsFromPaths()
     console.log('[NavigateView] Locations extracted:', locations.value.length)
+    console.log('[NavigateView] From locations:', fromLocations.value.length)
+    console.log('[NavigateView] To locations:', toLocations.value.length)
   } catch (error) {
     console.error('[NavigateView] Failed to load paths:', error)
   }
-  
-  // Wait for map to finish loading (in parallel)
-  await loadMapPromise
-  
-  console.log('[NavigateView] From locations:', fromLocations.value.length)
-  console.log('[NavigateView] To locations:', toLocations.value.length)
 })
 
 onUnmounted(() => {
