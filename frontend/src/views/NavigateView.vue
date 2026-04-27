@@ -1035,6 +1035,16 @@ watch(toLocation, () => {
 onMounted(async () => {
   loadMap()
   loadNotificationCount()
+  
+  // Load paths from API (critical for mobile/QR code access where localStorage is empty)
+  console.log('[NavigateView] Loading paths from API...')
+  try {
+    await pathManager.loadPaths()
+    console.log('[NavigateView] Paths loaded:', Object.keys(pathManager.getAllPaths()).length)
+  } catch (error) {
+    console.error('[NavigateView] Failed to load paths:', error)
+  }
+  
   // Wait for paths to load from storage/API, then extract locations
   await new Promise(resolve => setTimeout(resolve, 500))
   extractLocationsFromPaths()
