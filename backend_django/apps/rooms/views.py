@@ -9,7 +9,7 @@ from apps.facilities.models import Facility
 class RoomListView(generics.ListCreateAPIView):
     queryset = Room.objects.filter(is_deleted=False)
     serializer_class = RoomSerializer
-    permission_classes = [CanManageRoom]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
     def perform_create(self, serializer):
         """
@@ -35,7 +35,7 @@ class RoomListView(generics.ListCreateAPIView):
 class RoomDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Room.objects.filter(is_deleted=False)
     serializer_class = RoomSerializer
-    permission_classes = [CanManageRoom]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
     def perform_destroy(self, instance):
         instance.is_deleted = True

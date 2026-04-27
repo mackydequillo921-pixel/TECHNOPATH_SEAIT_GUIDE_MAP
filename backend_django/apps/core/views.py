@@ -27,7 +27,7 @@ class DepartmentListCreateView(generics.ListCreateAPIView):
 class DepartmentDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
 
 # Map Marker Views
@@ -119,13 +119,13 @@ class SearchHistoryListCreateView(generics.ListCreateAPIView):
 class AppConfigListCreateView(generics.ListCreateAPIView):
     queryset = AppConfig.objects.all()
     serializer_class = AppConfigSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
 
 class AppConfigDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = AppConfig.objects.all()
     serializer_class = AppConfigSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]  # Public read access
     lookup_field = 'config_key'
 
 
