@@ -1190,13 +1190,17 @@ const savePath = async (stayOpen = false) => {
 
 // Save current path and start a new one with same FROM location
 const saveAndAddAnother = async () => {
+  // Remember the FROM location BEFORE saving
+  const fromLocation = editForm.value.elementIds[0] || ''
+  const fromPoint = visualPoints.value[0] || null
+  
   // Save current path but stay open
   await savePath(true)
   displayToast('Path saved! Creating another...', 'success')
   
-  // Remember the FROM location (first point)
-  const fromLocation = editForm.value.elementIds[0] || ''
-  const fromPoint = visualPoints.value[0] || null
+  // Ensure we stay in "creating new" mode with same FROM
+  isCreatingNew.value = true
+  editingPathId.value = 'new_' + Date.now() // New unique ID to stay in editor
   
   // Reset for new path but keep FROM
   pointCounter = 1
@@ -1208,25 +1212,39 @@ const saveAndAddAnother = async () => {
     name: '',
     description: '',
     floor: 1,
-    elementIds: fromLocation ? [fromLocation] : ['']
+    elementIds: fromLocation ? [fromLocation, ''] : ['']
   }
   
   // Add the FROM point back to visualPoints
   if (fromLocation && fromPoint) {
-    visualPoints.value = [{
-      id: fromLocation,
-      x: fromPoint.x,
-      y: fromPoint.y
-    }]
+    visualPoints.value = [
+      { id: fromLocation, x: fromPoint.x, y: fromPoint.y },
+      { id: '', x: 0, y: 0 } // Empty TO field ready for input
+    ]
   } else {
-    visualPoints.value = [{ id: fromLocation || '', x: 0, y: 0 }]
+    visualPoints.value = [
+      { id: fromLocation || '', x: 0, y: 0 },
+      { id: '', x: 0, y: 0 }
+    ]
   }
   
   previewPositions.value = []
   editorMode.value = 'add'
   
+  // Refresh the routes list to show the newly saved path
+  if (selectedFromLocation.value) {
+    routesFromSelected.value = getRoutesForFromLocation(selectedFromLocation.value)
+  }
+  
   console.log('[AdminPathManager] Ready for next path. FROM:', fromLocation)
-  alert('Path saved! Now add another destination from ' + fromLocation)
+  
+  // Focus on the TO field
+  nextTick(() => {
+    const inputs = document.querySelectorAll('.admin-stop-input')
+    if (inputs.length > 1) {
+      inputs[inputs.length - 1].focus()
+    }
+  })
 }
 
 const deletePath = async (id) => {
