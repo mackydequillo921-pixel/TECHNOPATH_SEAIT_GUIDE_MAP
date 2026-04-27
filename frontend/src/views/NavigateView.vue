@@ -1033,22 +1033,26 @@ watch(toLocation, () => {
 
 // Lifecycle
 onMounted(async () => {
-  loadMap()
+  // Load map and paths in parallel for faster startup
+  const loadMapPromise = loadMap()
+  const loadPathsPromise = pathManager.loadPaths()
+  
   loadNotificationCount()
   
-  // Load paths from API (critical for mobile/QR code access where localStorage is empty)
   console.log('[NavigateView] Loading paths from API...')
   try {
-    await pathManager.loadPaths()
+    await loadPathsPromise
     console.log('[NavigateView] Paths loaded:', Object.keys(pathManager.getAllPaths()).length)
+    // Extract locations immediately after paths load
+    extractLocationsFromPaths()
+    console.log('[NavigateView] Locations extracted:', locations.value.length)
   } catch (error) {
     console.error('[NavigateView] Failed to load paths:', error)
   }
   
-  // Wait for paths to load from storage/API, then extract locations
-  await new Promise(resolve => setTimeout(resolve, 500))
-  extractLocationsFromPaths()
-  console.log('[NavigateView] Locations extracted:', locations.value.length)
+  // Wait for map to finish loading (in parallel)
+  await loadMapPromise
+  
   console.log('[NavigateView] From locations:', fromLocations.value.length)
   console.log('[NavigateView] To locations:', toLocations.value.length)
 })
