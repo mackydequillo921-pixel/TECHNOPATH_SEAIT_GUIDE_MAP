@@ -21,7 +21,7 @@ from .serializers import (
 class DepartmentListCreateView(generics.ListCreateAPIView):
     queryset = Department.objects.filter(is_active=True)
     serializer_class = DepartmentSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
 
 class DepartmentDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -34,7 +34,7 @@ class DepartmentDetailView(generics.RetrieveUpdateDestroyAPIView):
 class MapMarkerListCreateView(generics.ListCreateAPIView):
     queryset = MapMarker.objects.filter(is_active=True)
     serializer_class = MapMarkerSerializer
-    permission_classes = [ReadOnlyOrSuperAdmin]
+    permission_classes = [permissions.AllowAny]  # Public read access
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['marker_type', 'facility']
     search_fields = ['name']
@@ -43,20 +43,20 @@ class MapMarkerListCreateView(generics.ListCreateAPIView):
 class MapMarkerDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MapMarker.objects.all()
     serializer_class = MapMarkerSerializer
-    permission_classes = [ReadOnlyOrSuperAdmin]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
 
 # Map Label Views
 class MapLabelListCreateView(generics.ListCreateAPIView):
     queryset = MapLabel.objects.filter(is_active=True)
     serializer_class = MapLabelSerializer
-    permission_classes = [ReadOnlyOrSuperAdmin]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
 
 class MapLabelDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MapLabel.objects.all()
     serializer_class = MapLabelSerializer
-    permission_classes = [ReadOnlyOrSuperAdmin]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
 
 # Notification Type Views
@@ -103,7 +103,7 @@ class AdminAuditLogListView(generics.ListAPIView):
 class SearchHistoryListCreateView(generics.ListCreateAPIView):
     queryset = SearchHistory.objects.all()
     serializer_class = SearchHistorySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]  # Keep private - personal data
     filter_backends = [filters.OrderingFilter]
     ordering = ['-created_at']
 

@@ -260,13 +260,13 @@ class ImportMapView(APIView):
 class NavigationNodeListView(generics.ListCreateAPIView):
     queryset = NavigationNode.objects.filter(is_deleted=False)
     serializer_class = NavigationNodeSerializer
-    permission_classes = [ReadOnlyOrSuperAdmin]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
 
 class NavigationNodeDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = NavigationNode.objects.filter(is_deleted=False)
     serializer_class = NavigationNodeSerializer
-    permission_classes = [ReadOnlyOrSuperAdmin]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
     def perform_destroy(self, instance):
         """Soft delete — set is_deleted flag instead of removing the record."""
@@ -277,13 +277,13 @@ class NavigationNodeDetailView(generics.RetrieveUpdateDestroyAPIView):
 class NavigationEdgeListView(generics.ListCreateAPIView):
     queryset = NavigationEdge.objects.filter(is_deleted=False)
     serializer_class = NavigationEdgeSerializer
-    permission_classes = [ReadOnlyOrSuperAdmin]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
 
 class NavigationEdgeDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = NavigationEdge.objects.filter(is_deleted=False)
     serializer_class = NavigationEdgeSerializer
-    permission_classes = [ReadOnlyOrSuperAdmin]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
     def perform_destroy(self, instance):
         """Soft delete — set is_deleted flag instead of removing the record."""
@@ -296,7 +296,7 @@ class FindRouteView(APIView):
     Find shortest route between two navigation nodes.
     GET /navigation/route/?from=<node_name>&to=<node_name>
     """
-    permission_classes = [ReadOnlyOrSuperAdmin]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
     def get(self, request):
         from_name = request.query_params.get('from')
@@ -511,7 +511,7 @@ class GridSettingsView(APIView):
 
 class NavigationPathsView(APIView):
     """API endpoint for navigation paths with database storage."""
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
     def get(self, request):
         """List all non-deleted paths."""
@@ -569,7 +569,7 @@ class NavigationPathsView(APIView):
 
 class NavigationPathDetailView(APIView):
     """API endpoint for single path operations."""
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
     def get_object(self, pk):
         try:
