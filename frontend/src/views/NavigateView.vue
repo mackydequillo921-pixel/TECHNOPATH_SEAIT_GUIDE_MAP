@@ -308,7 +308,7 @@
       <!-- Rate -->
       <button 
         class="nav-fab-btn nav-rate-btn" 
-        @click="$router.push('/feedback')"
+        @click="showRating = true"
         title="Rate & Feedback"
       >
         <span class="material-icons">star</span>
@@ -324,6 +324,33 @@
       </button>
     </div>
 
+  </div>
+
+  <!-- Rating Dialog -->
+  <div v-if="showRating" class="modal-overlay" @click="showRating = false">
+    <div class="dialog" @click.stop>
+      <h3>Rate this App</h3>
+      <div class="star-rating">
+        <span
+          v-for="n in 5"
+          :key="n"
+          class="star material-icons"
+          :class="{ filled: n <= rating }"
+          @click="rating = n"
+        >
+          {{ n <= rating ? 'star' : 'star_border' }}
+        </span>
+      </div>
+      <textarea
+        v-model="ratingComment"
+        placeholder="Leave a comment (optional)"
+        rows="3"
+      ></textarea>
+      <div class="dialog-actions">
+        <button @click="showRating = false">Cancel</button>
+        <button class="primary" @click="submitRating">Submit</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -348,6 +375,29 @@ const zoomLevel = ref(1)
 const rotation = ref(0)
 const pathPositions = ref([])
 const unreadCount = ref(0)
+
+// Rating dialog state
+const showRating = ref(false)
+const rating = ref(5)
+const ratingComment = ref('')
+
+// Submit rating
+const submitRating = async () => {
+  try {
+    await api.post('/core/ratings/', {
+      rating: rating.value,
+      comment: ratingComment.value,
+      category: 'app'
+    })
+    showRating.value = false
+    rating.value = 5
+    ratingComment.value = ''
+    alert('Thank you for your rating!')
+  } catch (error) {
+    console.error('Error submitting rating:', error)
+    alert('Failed to submit rating. Please try again.')
+  }
+}
 
 // Load notification count from API
 const loadNotificationCount = async () => {
@@ -2296,5 +2346,93 @@ onUnmounted(() => {
   .nav-zoom-btn .material-icons {
     font-size: 20px;
   }
+}
+
+/* Rating Dialog Styles - Same as HomeView */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.dialog h3 {
+  margin: 0 0 20px 0;
+  text-align: center;
+  font-size: 20px;
+  color: #333;
+}
+
+.star-rating {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.star {
+  font-size: 32px;
+  cursor: pointer;
+  color: #ddd;
+  transition: color 0.2s;
+}
+
+.star.filled {
+  color: #FFC107;
+}
+
+.dialog textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  margin-bottom: 20px;
+  font-family: inherit;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.dialog-actions button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dialog-actions button:first-child {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.dialog-actions button.primary {
+  background: #FF5722;
+  color: white;
+}
+
+.dialog-actions button:hover {
+  opacity: 0.9;
 }
 </style>
