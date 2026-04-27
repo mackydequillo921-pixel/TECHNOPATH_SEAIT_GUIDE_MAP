@@ -619,19 +619,17 @@ watch(() => route.query, () => {
 
 
 const loadNotificationCount = async () => {
-
   try {
-
     const res = await api.get('/notifications/')
-
     unreadNotifications.value = res.data.filter(n => !n.is_read).length
-
   } catch (error) {
-
-    console.error('Error loading notifications:', error)
-
+    // Silently ignore 401 errors - user not logged in is expected
+    if (error.response?.status !== 401) {
+      console.error('Error loading notifications:', error)
+    }
+    // Reset count to 0 when not authenticated
+    unreadNotifications.value = 0
   }
-
 }
 
 
