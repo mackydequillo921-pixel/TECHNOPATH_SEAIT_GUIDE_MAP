@@ -87,6 +87,9 @@
                 </div>
               </div>
               <div class="route-actions">
+                <button class="admin-icon-btn" @click.stop="addToLocation(route)" title="Add TO Location">
+                  <span class="material-icons">add_location</span>
+                </button>
                 <button class="admin-icon-btn" @click.stop="navigateToPath(route.id)" title="Navigate">
                   <span class="material-icons">navigation</span>
                 </button>
@@ -1021,6 +1024,36 @@ const editPath = (id) => {
         editorSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
     })
+  })
+}
+
+// Add a new TO location to an existing path
+const addToLocation = (route) => {
+  // First open the path editor
+  editPath(route.id)
+  
+  // Then add a new empty TO location
+  nextTick(() => {
+    // Add new empty element ID for the new TO location
+    editForm.value.elementIds.push('')
+    // Add corresponding visual point
+    visualPoints.value.push({ 
+      id: '', 
+      x: 500 + (visualPoints.value.length % 3) * 80, 
+      y: 5000 + Math.floor(visualPoints.value.length / 3) * 80 
+    })
+    
+    // Focus on the new input field
+    nextTick(() => {
+      const inputs = document.querySelectorAll('.admin-stop-input')
+      const lastInput = inputs[inputs.length - 1]
+      if (lastInput) {
+        lastInput.focus()
+        lastInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    })
+    
+    displayToast('Enter the new TO location and click Save', 'info')
   })
 }
 
