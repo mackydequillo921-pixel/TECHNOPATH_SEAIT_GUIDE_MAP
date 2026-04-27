@@ -90,6 +90,9 @@
                 <button class="admin-icon-btn" @click.stop="addToLocation(route)" title="Add TO Location">
                   <span class="material-icons">add_location</span>
                 </button>
+                <button class="admin-icon-btn" @click.stop="saveAndAddAnotherTo(route)" title="Save & Add Another TO">
+                  <span class="material-icons">playlist_add</span>
+                </button>
                 <button class="admin-icon-btn" @click.stop="navigateToPath(route.id)" title="Navigate">
                   <span class="material-icons">navigation</span>
                 </button>
@@ -311,6 +314,10 @@
           <button class="admin-btn admin-btn-success" @click="saveAndAddAnother" v-if="isCreatingNew">
             <span class="material-icons">save</span>
             Save & Add Another
+          </button>
+          <button class="admin-btn admin-btn-success" @click="saveAndAddAnotherToFromEditor" v-if="!isCreatingNew">
+            <span class="material-icons">playlist_add</span>
+            Save & Add Another TO
           </button>
           <button class="admin-btn admin-btn-primary" @click="savePath">
             <span class="material-icons">save</span>
@@ -1055,6 +1062,59 @@ const addToLocation = (route) => {
     
     displayToast('Enter the new TO location and click Save', 'info')
   })
+}
+
+// Save and immediately add another TO location (like Save & Add Another)
+const saveAndAddAnotherTo = async (route) => {
+  // Open the path editor first
+  editPath(route.id)
+  
+  // Wait for editor to open
+  await nextTick()
+  
+  // Add new empty TO location
+  editForm.value.elementIds.push('')
+  visualPoints.value.push({ 
+    id: '', 
+    x: 500 + (visualPoints.value.length % 3) * 80, 
+    y: 5000 + Math.floor(visualPoints.value.length / 3) * 80 
+  })
+  
+  // Focus and scroll to new input
+  await nextTick()
+  const inputs = document.querySelectorAll('.admin-stop-input')
+  const lastInput = inputs[inputs.length - 1]
+  if (lastInput) {
+    lastInput.focus()
+    lastInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+  
+  displayToast('Enter TO location, then click "Save & Add Another TO" button in the editor to add more', 'info')
+}
+
+// Save path and add another TO location while staying in editor
+const saveAndAddAnotherToFromEditor = async () => {
+  // Save current path
+  await savePath(true)
+  
+  // Add new empty TO location
+  editForm.value.elementIds.push('')
+  visualPoints.value.push({ 
+    id: '', 
+    x: 500 + (visualPoints.value.length % 3) * 80, 
+    y: 5000 + Math.floor(visualPoints.value.length / 3) * 80 
+  })
+  
+  // Focus and scroll to new input
+  await nextTick()
+  const inputs = document.querySelectorAll('.admin-stop-input')
+  const lastInput = inputs[inputs.length - 1]
+  if (lastInput) {
+    lastInput.focus()
+    lastInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+  
+  displayToast('Path saved! Enter the new TO location...', 'success')
 }
 
 const savePath = async (stayOpen = false) => {
