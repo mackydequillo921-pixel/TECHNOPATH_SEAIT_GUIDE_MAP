@@ -36,8 +36,7 @@ services:
         value: "https://technopath-frontend-dyod.onrender.com,https://technopath-frontend-or73.onrender.com,https://technopath-frontend.onrender.com,http://localhost:5173"
       - key: FLASK_CHATBOT_URL
         value: "https://technopath-chatbot-dyod.onrender.com"
-      - key: DATABASE_URL
-        value: sqlite:///tmp/technopath.db
+      # DATABASE_URL - Set this manually in Render dashboard to your PostgreSQL URL
 
   # Chatbot - Flask Web Service
   - type: web

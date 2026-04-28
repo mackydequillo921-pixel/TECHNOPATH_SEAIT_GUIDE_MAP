@@ -13,6 +13,10 @@ python manage.py seed_admins
 echo "Seeding default campus data..."
 python manage.py seed_default_data
 
+# Seed navigation paths and nodes
+echo "Seeding navigation data..."
+python manage.py seed_data || echo "Navigation seeding skipped (may already exist)"
+
 # Static files already collected during build
 # Start gunicorn
 echo "Starting Gunicorn..."
