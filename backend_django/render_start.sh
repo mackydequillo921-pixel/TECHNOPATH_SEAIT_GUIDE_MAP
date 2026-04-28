@@ -17,9 +17,9 @@ python manage.py reset_all_passwords
 echo "Seeding default campus data..."
 python manage.py seed_default_data
 
-# Seed navigation paths and nodes
+# Seed navigation paths and nodes (using fixed model structure)
 echo "Seeding navigation data..."
-python manage.py seed_data || echo "Navigation seeding skipped (may already exist)"
+python manage.py seed_data_fixed || echo "Navigation seeding may have already run"
 
 # Static files already collected during build
 # Start gunicorn
