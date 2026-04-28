@@ -64,12 +64,9 @@ api.interceptors.response.use(
       localStorage.removeItem('tp_token')
       localStorage.removeItem('tp_refresh')
       
-      // Only redirect to login if on admin page
-      if (window.location.pathname.startsWith('/admin')) {
-        window.location.href = '/admin/login'
-      }
-      
-      return Promise.reject(refreshError)
+      // Remove Authorization header and retry for public endpoints
+      delete original.headers.Authorization
+      return api(original)
     } finally {
       isRefreshing = false
     }

@@ -22,7 +22,7 @@ class MapGalleryView(APIView):
     List all uploaded SVG map files.
     GET /navigation/maps/
     """
-    permission_classes = [ReadOnlyOrSuperAdmin]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
     def get(self, request):
         maps_dir = os.path.join(settings.MEDIA_ROOT, 'maps')
