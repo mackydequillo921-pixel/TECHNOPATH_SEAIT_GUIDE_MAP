@@ -90,7 +90,6 @@
           <router-view v-slot="{ Component, route }">
             <transition
               :name="getTransitionName(route)"
-              mode="out-in"
               appear
             >
               <keep-alive :include="['HomeView', 'SettingsView']">
@@ -119,7 +118,6 @@
         <router-view v-slot="{ Component, route }">
           <transition
             :name="getTransitionName(route)"
-            mode="out-in"
             appear
           >
             <keep-alive :include="['HomeView', 'SettingsView']">

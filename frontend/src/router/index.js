@@ -1,34 +1,60 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
+import { shallowRef, h } from 'vue'
+
+// Error boundary component for failed lazy loads
+const ErrorComponent = {
+  name: 'LoadError',
+  setup() {
+    return () => h('div', { 
+      style: 'padding: 40px; text-align: center; color: #666;' 
+    }, [
+      h('span', { class: 'material-icons', style: 'font-size: 48px; color: #ccc; display: block; margin-bottom: 16px;' }, 'error_outline'),
+      h('p', 'Failed to load page. Please refresh to try again.')
+    ])
+  }
+}
+
+// Helper to handle lazy loading with error boundary
+const lazyLoad = (importFn) => {
+  return async () => {
+    try {
+      return await importFn()
+    } catch (err) {
+      console.error('[Router] Failed to load component:', err)
+      return ErrorComponent
+    }
+  }
+}
 
 const routes = [
   // Splash screen
-  { path: '/splash', component: () => import('../views/SplashScreen.vue') },
+  { path: '/splash', component: lazyLoad(() => import('../views/SplashScreen.vue')) },
 
   // Public mobile routes
-  { path: '/',             component: () => import('../views/HomeView.vue') },
-  { path: '/map',          component: () => import('../views/MapView.vue') },
-  { path: '/navigate',     component: () => import('../views/NavigateView.vue') },
-  { path: '/chatbot',      component: () => import('../views/ChatbotView.vue') },
-  { path: '/notifications',component: () => import('../views/NotificationsView.vue') },
-  { path: '/settings',     component: () => import('../views/SettingsView.vue') },
-  { path: '/profile',      component: () => import('../views/ProfileView.vue') },
-  { path: '/favorites',    component: () => import('../views/FavoritesView.vue') },
-  { path: '/feedback',     component: () => import('../views/FeedbackView.vue') },
+  { path: '/',             component: lazyLoad(() => import('../views/HomeView.vue')) },
+  { path: '/map',          component: lazyLoad(() => import('../views/MapView.vue')) },
+  { path: '/navigate',     component: lazyLoad(() => import('../views/NavigateView.vue')) },
+  { path: '/chatbot',      component: lazyLoad(() => import('../views/ChatbotView.vue')) },
+  { path: '/notifications',component: lazyLoad(() => import('../views/NotificationsView.vue')) },
+  { path: '/settings',     component: lazyLoad(() => import('../views/SettingsView.vue')) },
+  { path: '/profile',      component: lazyLoad(() => import('../views/ProfileView.vue')) },
+  { path: '/favorites',    component: lazyLoad(() => import('../views/FavoritesView.vue')) },
+  { path: '/feedback',     component: lazyLoad(() => import('../views/FeedbackView.vue')) },
 
 
   // Info pages
-  { path: '/building-info',   component: () => import('../views/InfoView.vue'), props: { type: 'buildings' } },
-  { path: '/rooms-info',      component: () => import('../views/InfoView.vue'), props: { type: 'rooms' } },
-  { path: '/instructor-info', component: () => import('../views/InfoView.vue'), props: { type: 'instructors' } },
-  { path: '/employees',       component: () => import('../views/InfoView.vue'), props: { type: 'employees' } },
-  { path: '/info/:type',      component: () => import('../views/InfoView.vue'), props: true },
+  { path: '/building-info',   component: lazyLoad(() => import('../views/InfoView.vue')), props: { type: 'buildings' } },
+  { path: '/rooms-info',      component: lazyLoad(() => import('../views/InfoView.vue')), props: { type: 'rooms' } },
+  { path: '/instructor-info', component: lazyLoad(() => import('../views/InfoView.vue')), props: { type: 'instructors' } },
+  { path: '/employees',       component: lazyLoad(() => import('../views/InfoView.vue')), props: { type: 'employees' } },
+  { path: '/info/:type',      component: lazyLoad(() => import('../views/InfoView.vue')), props: true },
 
   // Admin routes
-  { path: '/admin/login', component: () => import('../views/AdminLoginView.vue') },
+  { path: '/admin/login', component: lazyLoad(() => import('../views/AdminLoginView.vue')) },
   {
     path: '/admin',
-    component: () => import('../views/AdminView.vue'),
+    component: lazyLoad(() => import('../views/AdminView.vue')),
     meta: { requiresAuth: true },
   },
 ]
