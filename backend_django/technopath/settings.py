@@ -72,21 +72,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'technopath.wsgi.application'
 
-# Database configuration - supports Render persistent disk
+# Database configuration - supports Render PostgreSQL or local SQLite
 import os
-DATABASE_PATH = config('DATABASE_URL', default=f'sqlite:///{BASE_DIR}/technopath.db').replace('sqlite:///', '')
-if DATABASE_PATH.startswith('/data/'):
-    # Use Render persistent disk path
-    DB_NAME = DATABASE_PATH
-else:
-    DB_NAME = BASE_DIR / 'technopath.db'
+import dj_database_url
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': DB_NAME,
+# Try to get DATABASE_URL from environment (Render PostgreSQL)
+database_url = config('DATABASE_URL', default=None)
+
+if database_url:
+    # Use PostgreSQL on Render
+    DATABASES = {
+        'default': dj_database_url.parse(database_url, conn_max_age=600)
     }
-}
+else:
+    # Fallback to SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'technopath.db',
+        }
+    }
 
 AUTH_USER_MODEL = 'users.AdminUser'
 
