@@ -1718,6 +1718,16 @@ onMounted(async () => {
   await loadMap()
   await loadFacilities()
   await loadRooms()
+  
+  // Expose data to window for debugging
+  window.pathManagerData = {
+    paths,
+    fromLocations,
+    toLocations,
+    gridSettings,
+    facilities,
+    rooms
+  }
 })
 </script>
 
