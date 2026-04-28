@@ -64,13 +64,9 @@
             <span class="material-icons">notifications_active</span>
             <span>Send Notification</span>
           </button>
-          <button v-if="auth.canManageFacilities" class="action-btn" @click="navigateTo('facilities')">
-            <span class="material-icons">business</span>
-            <span>Manage Facilities</span>
-          </button>
-          <button v-if="auth.canManageAllRooms || auth.canManageOwnRooms" class="action-btn" @click="navigateTo('rooms')">
-            <span class="material-icons">meeting_room</span>
-            <span>Manage Rooms</span>
+          <button v-if="auth.canManageNavigation" class="action-btn" @click="navigateTo('path-manager')">
+            <span class="material-icons">map</span>
+            <span>Manage Paths</span>
           </button>
           <button v-if="auth.canManageFAQ" class="action-btn" @click="navigateTo('faq')">
             <span class="material-icons">smart_toy</span>
