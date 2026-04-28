@@ -198,9 +198,10 @@ export function useLocations() {
 
   function normalizeLocations(nodes) {
     return nodes.map(node => ({
-      id: node.id,
+      id: String(node.id),  // Convert numeric IDs to strings
       name: node.name || node.label || `Location ${node.id}`,
       type: node.type || node.node_type || 'location',
+      subtype: node.subtype || '',
       x: node.x_position || node.x || 0,
       y: node.y_position || node.y || 0,
       floor: node.floor || 1,

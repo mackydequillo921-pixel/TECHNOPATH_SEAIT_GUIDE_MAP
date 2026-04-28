@@ -488,22 +488,16 @@ const loadData = async () => {
 
     
 
-    // Try to load search history from API if online
-
-    if (isOnline()) {
-
+    // Try to load search history from API if online AND user is authenticated
+    // This prevents 401 errors for non-logged-in users
+    if (isOnline() && authStore.isLoggedIn) {
       try {
-
         const searchRes = await api.get('/core/search-history/')
-
         recentSearches.value = searchRes.data.slice(0, 10)
-
-      } catch {
-
-        // Silently fail for search history
-
+      } catch (error) {
+        // Silently fail for search history - don't crash UI
+        console.log('[HomeView] Search history load failed:', error.message)
       }
-
     }
 
   } catch (error) {
@@ -619,13 +613,19 @@ watch(() => route.query, () => {
 
 
 const loadNotificationCount = async () => {
+  // Skip API call if not authenticated
+  if (!authStore.isLoggedIn) {
+    unreadNotifications.value = 0
+    return
+  }
+  
   try {
     const res = await api.get('/notifications/')
     unreadNotifications.value = res.data.filter(n => !n.is_read).length
   } catch (error) {
     // Silently ignore 401 errors - user not logged in is expected
     if (error.response?.status !== 401) {
-      console.error('Error loading notifications:', error)
+      console.error('[HomeView] Error loading notifications:', error.message)
     }
     // Reset count to 0 when not authenticated
     unreadNotifications.value = 0
@@ -1039,34 +1039,21 @@ const performSearch = async () => {
 
   
 
-  // Save search to history if results found
-
-  if (searchResults.value.length > 0) {
-
+  // Save search to history if results found AND user is authenticated
+  if (searchResults.value.length > 0 && authStore.isLoggedIn) {
     try {
-
       await api.post('/core/search-history/', {
-
         query: searchText.value,
-
         results_count: searchResults.value.length,
-
         was_clicked: false
-
       })
 
       // Refresh recent searches
-
       const res = await api.get('/core/search-history/')
-
       recentSearches.value = res.data.slice(0, 10)
-
     } catch (error) {
-
-      console.log('Failed to save search history')
-
+      console.log('[HomeView] Failed to save search history:', error.message)
     }
-
   }
 
   
@@ -1092,27 +1079,19 @@ const selectRecentSearch = (query) => {
 
 
 const clearRecentSearches = async () => {
-
-  try {
-
-    // Delete each search history entry
-
-    await Promise.all(recentSearches.value.map(search => 
-
-      api.delete(`/core/search-history/${search.id}/`).catch(() => {})
-
-    ))
-
-    recentSearches.value = []
-
-  } catch (error) {
-
-    console.error('Error clearing search history:', error)
-
-    recentSearches.value = []
-
+  // Only try to clear server-side history if user is authenticated
+  if (authStore.isLoggedIn && recentSearches.value.length > 0) {
+    try {
+      // Delete each search history entry
+      await Promise.all(recentSearches.value.map(search => 
+        api.delete(`/core/search-history/${search.id}/`).catch(() => {})
+      ))
+    } catch (error) {
+      console.error('[HomeView] Error clearing search history:', error.message)
+    }
   }
-
+  // Always clear local state
+  recentSearches.value = []
 }
 
 
@@ -1215,12 +1194,13 @@ const onOnboardingSkip = () => {
 // Lifecycle
 
 onMounted(async () => {
-
   await loadData()
-
   handleDeepLink()
-
-  loadNotificationCount()
+  
+  // Only load notifications if user is authenticated
+  if (authStore.isLoggedIn) {
+    loadNotificationCount()
+  }
 
   if (!syncStore.lastSyncedAt) {
 

@@ -48,6 +48,18 @@ router.beforeEach((to, from, next) => {
     return
   }
 
+  // Handle session expired parameter
+  if (to.query.session_expired) {
+    // Show toast notification for session expiration
+    import('../services/toast.js').then(({ showToast }) => {
+      showToast('Your session has expired. Please log in again.', 'warning', 5000)
+    })
+    // Remove query param after showing toast
+    const { session_expired, ...otherQuery } = to.query
+    next({ path: to.path, query: otherQuery, replace: true })
+    return
+  }
+
   if (to.meta.requiresAuth) {
     const authStore = useAuthStore()
     if (!authStore.isLoggedIn) {

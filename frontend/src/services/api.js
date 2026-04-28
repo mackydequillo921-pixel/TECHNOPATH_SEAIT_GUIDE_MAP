@@ -49,7 +49,7 @@ api.interceptors.response.use(
         throw new Error('No refresh token')
       }
       
-      const res = await axios.post('/api/auth/refresh/', { refresh })
+      const res = await api.post('/auth/refresh/', { refresh })
       const newToken = res.data.access
       localStorage.setItem('tp_token', newToken)
       
@@ -60,15 +60,26 @@ api.interceptors.response.use(
       original.headers.Authorization = `Bearer ${newToken}`
       return api(original)
     } catch (refreshError) {
-      // Clear tokens but don't redirect on public pages
+      // Token refresh failed - clear auth state and reject properly
       localStorage.removeItem('tp_token')
       localStorage.removeItem('tp_refresh')
+      localStorage.removeItem('tp_user')
       
-      // Remove Authorization header and retry for public endpoints
-      delete original.headers.Authorization
-      return api(original)
+      // Redirect to login if this was an auth-required request
+      const authRequired = original.headers.Authorization !== undefined
+      if (authRequired && !window.location.pathname.includes('/login')) {
+        window.location.href = '/?session_expired=1'
+      }
+      
+      // Reject with a clear error that components can handle
+      return Promise.reject({
+        ...refreshError,
+        isAuthError: true,
+        message: 'Session expired. Please log in again.'
+      })
     } finally {
       isRefreshing = false
+      refreshSubscribers = []
     }
   }
 )

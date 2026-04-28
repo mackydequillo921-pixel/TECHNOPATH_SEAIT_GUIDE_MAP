@@ -33,6 +33,17 @@ app.config.errorHandler = (err, instance, info) => {
   }
 }
 
+// FIX: Handle unhandled promise rejections (e.g., failed API calls)
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[TechnoPath] Unhandled promise rejection:', event.reason)
+  
+  // Prevent default browser error handling for auth errors
+  if (event.reason?.isAuthError || event.reason?.response?.status === 401) {
+    event.preventDefault()
+    console.log('[TechnoPath] Auth error handled by interceptor')
+  }
+})
+
 app.mount('#app')
 
 // Register service worker for PWA

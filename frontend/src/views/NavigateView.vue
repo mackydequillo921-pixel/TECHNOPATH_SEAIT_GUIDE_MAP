@@ -401,7 +401,10 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import pathManager from '../services/pathManager.js'
 import { useLocations } from '../composables/useLocations.js'
+import { useAuthStore } from '../stores/authStore.js'
 import api from '../services/api.js'
+
+const authStore = useAuthStore()
 
 // DOM References
 const mapContainer = ref(null)
@@ -447,9 +450,13 @@ const categoryMap = {
   'Bug Report': 'bug_report'
 }
 
-// Submit rating
+// Submit rating (only if authenticated)
 const submitRating = async () => {
   if (!rating.value) return
+  if (!authStore.isLoggedIn) {
+    alert('Please log in to submit feedback')
+    return
+  }
   
   isSubmitting.value = true
   
@@ -465,20 +472,24 @@ const submitRating = async () => {
     category.value = 'General'
     alert('Thank you for your feedback!')
   } catch (error) {
-    console.error('Error submitting rating:', error)
+    console.error('[NavigateView] Error submitting rating:', error.message)
     alert('Failed to submit feedback. Please try again.')
   } finally {
     isSubmitting.value = false
   }
 }
 
-// Load notification count from API
+// Load notification count from API (only if authenticated)
 const loadNotificationCount = async () => {
+  if (!authStore.isLoggedIn) {
+    unreadCount.value = 0
+    return
+  }
   try {
     const res = await api.get('/notifications/')
     unreadCount.value = res.data.filter(n => !n.is_read).length
   } catch (error) {
-    console.error('Error loading notifications:', error)
+    console.error('[NavigateView] Error loading notifications:', error.message)
     unreadCount.value = 0
   }
 }
@@ -499,9 +510,11 @@ onUnmounted(() => {
 const { locations, getLocationName, extractFromSVG, extractLocationsFromPaths } = useLocations()
 
 // Show From and To endpoints (first and last points of paths)
-// Allow any valid string ID
+// Allow any valid ID (string or number)
 const validLocation = (l) => {
-  return l && l.id && typeof l.id === 'string' && l.id.trim() !== ''
+  if (!l || l.id == null) return false
+  const id = String(l.id).trim()
+  return id !== '' && id !== 'undefined' && id !== 'null'
 }
 
 
@@ -1806,6 +1819,14 @@ onUnmounted(() => {
 /* Navigation Path Overlay */
 .nav-path-overlay {
   pointer-events: none;
+}
+
+/* Location Selection Panel - Base Styles */
+.svg-nav-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--color-surface, #f5f5f5);
 }
 
 /* Responsive - Liquid Design */
