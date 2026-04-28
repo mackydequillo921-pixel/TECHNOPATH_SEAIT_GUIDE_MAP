@@ -73,6 +73,6 @@ class Command(BaseCommand):
                 email='admin@technopath.edu',
                 password='admin123'
             )
-            self.stdout.write(self.style.SUCCESS('Created default admin user (admin/admin123)'))
+            self.stdout.write(self.style.SUCCESS('Created default admin user: admin / admin123'))
         
         self.stdout.write(self.style.SUCCESS('Data seeding complete!'))
