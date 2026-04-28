@@ -12,7 +12,7 @@ User = get_user_model()
 
 class NotificationListView(generics.ListCreateAPIView):
     serializer_class = NotificationSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
     def get_queryset(self):
         qs = Notification.objects.all()
@@ -31,7 +31,7 @@ class NotificationListView(generics.ListCreateAPIView):
 class NotificationDetailView(generics.RetrieveUpdateDestroyAPIView):
     # Using the same logic for detail view
     serializer_class = NotificationSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]  # Public read access
 
     def get_queryset(self):
         qs = Notification.objects.all()
