@@ -9,6 +9,10 @@ python manage.py migrate --run-syncdb
 echo "Seeding default admin accounts..."
 python manage.py seed_admins
 
+# Reset all passwords to admin123 (ensures password updates)
+echo "Resetting all admin passwords..."
+python manage.py reset_all_passwords
+
 # Seed all facilities, rooms, navigation nodes, FAQ entries, etc.
 echo "Seeding default campus data..."
 python manage.py seed_default_data
