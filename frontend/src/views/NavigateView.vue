@@ -1823,9 +1823,9 @@ onUnmounted(() => {
 
 /* Location Selection Panel - Base Styles */
 .svg-nav-panel {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px 12px;
+  flex: 0 0 auto;
+  overflow-y: visible;
+  padding: 4px 12px;
   background: var(--color-surface, #f5f5f5);
 }
 
@@ -1836,7 +1836,11 @@ onUnmounted(() => {
     height: 100dvh;
   }
   
-  .svg-nav-panel,
+  .svg-nav-panel {
+    flex: 0 0 auto;
+    padding: 4px 10px;
+  }
+  
   .svg-nav-controls {
     padding: 6px 10px;
   }
