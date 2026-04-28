@@ -1722,10 +1722,7 @@ onMounted(async () => {
   // Expose data to window for debugging
   window.pathManagerData = {
     paths,
-    fromLocations,
-    gridSettings,
-    facilities,
-    rooms
+    fromLocations
   }
 })
 </script>
