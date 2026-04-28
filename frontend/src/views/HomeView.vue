@@ -118,6 +118,19 @@
               </div>
             </div>
           </div>
+          
+          <!-- Zoom Controls -->
+          <div class="zoom-controls">
+            <button class="zoom-btn zoom-in" @click="zoomIn" title="Zoom In">
+              <span class="material-icons">add</span>
+            </button>
+            <button class="zoom-btn zoom-out" @click="zoomOut" title="Zoom Out">
+              <span class="material-icons">remove</span>
+            </button>
+            <button class="zoom-btn zoom-reset" @click="resetTransform" title="Reset View">
+              <span class="material-icons">center_focus_strong</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -400,7 +413,9 @@ const {
 
   onTouchMove: handleTouchPan,
 
-  initTransform
+  initTransform,
+  
+  resetTransform
 
 } = useMapPanZoom()
 
