@@ -1,77 +1,162 @@
 """
-Seed initial navigation data into the database.
-Uses correct model structure: NavigationNode, NavigationEdge, Path, PathPoint
+Seed initial navigation paths for AdminPathManager.
+Creates Path and PathPoint objects that the frontend expects.
 """
 from django.core.management.base import BaseCommand
-from apps.navigation.models import NavigationNode, NavigationEdge, Path, PathPoint
-from apps.facilities.models import Facility
-from apps.rooms.models import Room
+from apps.navigation.models import Path, PathPoint
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
 class Command(BaseCommand):
-    help = 'Seed initial navigation data with correct model structure'
+    help = 'Seed navigation paths for AdminPathManager'
 
     def handle(self, *args, **kwargs):
-        self.stdout.write('Seeding navigation data...')
+        self.stdout.write('Seeding navigation paths...')
         
-        # Create default nodes (campus locations)
-        nodes_data = [
-            {'map_svg_id': 'gate', 'name': 'College Gate', 'x': 100, 'y': 100, 'node_type': 'entrance', 'floor': 1},
-            {'map_svg_id': 'admin', 'name': 'Admin Building', 'x': 200, 'y': 150, 'node_type': 'building', 'floor': 1},
-            {'map_svg_id': 'library', 'name': 'Library', 'x': 300, 'y': 200, 'node_type': 'building', 'floor': 1},
-            {'map_svg_id': 'canteen', 'name': 'Canteen', 'x': 250, 'y': 300, 'node_type': 'facility', 'floor': 1},
-            {'map_svg_id': 'gym', 'name': 'Gymnasium', 'x': 400, 'y': 250, 'node_type': 'facility', 'floor': 1},
-            {'map_svg_id': 'ict', 'name': 'ICT Building', 'x': 350, 'y': 400, 'node_type': 'building', 'floor': 1},
-            {'map_svg_id': 'engineering', 'name': 'Engineering Building', 'x': 450, 'y': 350, 'node_type': 'building', 'floor': 1},
-            {'map_svg_id': 'nursing', 'name': 'Nursing Building', 'x': 500, 'y': 450, 'node_type': 'building', 'floor': 1},
-            {'map_svg_id': 'educ', 'name': 'Education Building', 'x': 550, 'y': 300, 'node_type': 'building', 'floor': 1},
-            {'map_svg_id': 'parking', 'name': 'Parking Area', 'x': 150, 'y': 250, 'node_type': 'facility', 'floor': 1},
+        # Get or create a system user for the paths
+        system_user, _ = User.objects.get_or_create(
+            username='system',
+            defaults={
+                'email': 'system@technopath.edu',
+                'is_staff': True,
+                'is_active': True
+            }
+        )
+        if not system_user.password:
+            system_user.set_password('system123')
+            system_user.save()
+        
+        # Define paths with their points (element_ids from the SVG map)
+        paths_data = [
+            {
+                'name': 'Gate to Admin Building',
+                'description': 'Main entrance to administration',
+                'from_element': 'gate',
+                'to_element': 'admin',
+                'points': [
+                    {'element_id': 'gate', 'x': 100, 'y': 100},
+                    {'element_id': 'path-gate-admin', 'x': 150, 'y': 125},
+                    {'element_id': 'admin', 'x': 200, 'y': 150},
+                ]
+            },
+            {
+                'name': 'Admin to Library',
+                'description': 'Administration building to library',
+                'from_element': 'admin',
+                'to_element': 'library',
+                'points': [
+                    {'element_id': 'admin', 'x': 200, 'y': 150},
+                    {'element_id': 'path-admin-lib', 'x': 250, 'y': 175},
+                    {'element_id': 'library', 'x': 300, 'y': 200},
+                ]
+            },
+            {
+                'name': 'Library to Canteen',
+                'description': 'Library to school canteen',
+                'from_element': 'library',
+                'to_element': 'canteen',
+                'points': [
+                    {'element_id': 'library', 'x': 300, 'y': 200},
+                    {'element_id': 'path-lib-canteen', 'x': 275, 'y': 250},
+                    {'element_id': 'canteen', 'x': 250, 'y': 300},
+                ]
+            },
+            {
+                'name': 'Canteen to Gym',
+                'description': 'Canteen to gymnasium',
+                'from_element': 'canteen',
+                'to_element': 'gym',
+                'points': [
+                    {'element_id': 'canteen', 'x': 250, 'y': 300},
+                    {'element_id': 'path-canteen-gym', 'x': 325, 'y': 275},
+                    {'element_id': 'gym', 'x': 400, 'y': 250},
+                ]
+            },
+            {
+                'name': 'Gym to ICT Building',
+                'description': 'Gymnasium to ICT building',
+                'from_element': 'gym',
+                'to_element': 'ict',
+                'points': [
+                    {'element_id': 'gym', 'x': 400, 'y': 250},
+                    {'element_id': 'path-gym-ict', 'x': 375, 'y': 325},
+                    {'element_id': 'ict', 'x': 350, 'y': 400},
+                ]
+            },
+            {
+                'name': 'ICT to Engineering',
+                'description': 'ICT to Engineering building',
+                'from_element': 'ict',
+                'to_element': 'engineering',
+                'points': [
+                    {'element_id': 'ict', 'x': 350, 'y': 400},
+                    {'element_id': 'path-ict-eng', 'x': 400, 'y': 375},
+                    {'element_id': 'engineering', 'x': 450, 'y': 350},
+                ]
+            },
+            {
+                'name': 'Engineering to Nursing',
+                'description': 'Engineering to Nursing building',
+                'from_element': 'engineering',
+                'to_element': 'nursing',
+                'points': [
+                    {'element_id': 'engineering', 'x': 450, 'y': 350},
+                    {'element_id': 'path-eng-nurse', 'x': 475, 'y': 400},
+                    {'element_id': 'nursing', 'x': 500, 'y': 450},
+                ]
+            },
+            {
+                'name': 'Nursing to Education',
+                'description': 'Nursing to Education building',
+                'from_element': 'nursing',
+                'to_element': 'educ',
+                'points': [
+                    {'element_id': 'nursing', 'x': 500, 'y': 450},
+                    {'element_id': 'path-nurse-educ', 'x': 525, 'y': 375},
+                    {'element_id': 'educ', 'x': 550, 'y': 300},
+                ]
+            },
+            {
+                'name': 'Gate to Parking',
+                'description': 'Main entrance to parking area',
+                'from_element': 'gate',
+                'to_element': 'parking',
+                'points': [
+                    {'element_id': 'gate', 'x': 100, 'y': 100},
+                    {'element_id': 'path-gate-park', 'x': 125, 'y': 175},
+                    {'element_id': 'parking', 'x': 150, 'y': 250},
+                ]
+            },
         ]
         
-        created_nodes = 0
-        for node_data in nodes_data:
-            node, created = NavigationNode.objects.get_or_create(
-                map_svg_id=node_data['map_svg_id'],
-                defaults=node_data
+        created_paths = 0
+        for path_data in paths_data:
+            path, created = Path.objects.get_or_create(
+                name=path_data['name'],
+                defaults={
+                    'description': path_data['description'],
+                    'is_active': True,
+                    'created_by': system_user
+                }
             )
-            if created:
-                created_nodes += 1
-        
-        self.stdout.write(self.style.SUCCESS(f'Created {created_nodes} new nodes'))
-        
-        # Create navigation edges (connections between nodes)
-        edges_data = [
-            ('gate', 'admin', 100),
-            ('admin', 'library', 150),
-            ('library', 'canteen', 100),
-            ('canteen', 'gym', 150),
-            ('gym', 'ict', 150),
-            ('ict', 'engineering', 100),
-            ('engineering', 'nursing', 100),
-            ('nursing', 'educ', 150),
-            ('gate', 'parking', 150),
-        ]
-        
-        created_edges = 0
-        for from_id, to_id, distance in edges_data:
-            from_node = NavigationNode.objects.filter(map_svg_id=from_id).first()
-            to_node = NavigationNode.objects.filter(map_svg_id=to_id).first()
             
-            if from_node and to_node:
-                edge, created = NavigationEdge.objects.get_or_create(
-                    from_node=from_node,
-                    to_node=to_node,
-                    defaults={'distance': distance}
-                )
-                if created:
-                    created_edges += 1
+            if created:
+                # Create PathPoints for this path
+                for i, point_data in enumerate(path_data['points']):
+                    PathPoint.objects.create(
+                        path=path,
+                        sequence=i,
+                        element_id=point_data['element_id'],
+                        x=point_data['x'],
+                        y=point_data['y']
+                    )
+                created_paths += 1
         
-        self.stdout.write(self.style.SUCCESS(f'Created {created_edges} new edges'))
+        self.stdout.write(self.style.SUCCESS(f'Created {created_paths} new paths with {sum(len(p["points"]) for p in paths_data)} points'))
         
         # Create default admin user if none exists
-        if not User.objects.filter(is_superuser=True).exists():
+        if not User.objects.filter(username='admin').exists():
             User.objects.create_superuser(
                 username='admin',
                 email='admin@technopath.edu',
@@ -79,4 +164,4 @@ class Command(BaseCommand):
             )
             self.stdout.write(self.style.SUCCESS('Created default admin user: admin / admin123'))
         
-        self.stdout.write(self.style.SUCCESS('Navigation data seeding complete!'))
+        self.stdout.write(self.style.SUCCESS('Navigation path seeding complete!'))
