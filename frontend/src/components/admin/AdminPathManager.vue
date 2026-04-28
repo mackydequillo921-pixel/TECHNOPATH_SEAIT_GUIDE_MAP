@@ -740,6 +740,17 @@ const loadPaths = async () => {
   }
 }
 
+// Load from locations for the "From" cards view
+const loadFromLocations = async () => {
+  try {
+    console.log('[AdminPathManager] Loading from locations...')
+    // Already loaded via loadPaths — just populate from the paths array
+    console.log('[AdminPathManager] Available from locations:', fromLocations.value)
+  } catch (error) {
+    console.error('[AdminPathManager] Error loading from locations:', error)
+  }
+}
+
 const loadMap = async () => {
   try {
     const response = await fetch('Map_labeled.svg')
@@ -1713,12 +1724,14 @@ const uniqueToDestinations = computed(() => {
 
 // Lifecycle
 onMounted(async () => {
-  await loadGridSettings()
   await loadPaths()
+  await loadFromLocations() 
   await loadMap()
   await loadFacilities()
   await loadRooms()
-  
+  await loadGridSettings()
+  await loadBuildingSvg()
+})  
   // Expose data to window for debugging
   window.pathManagerData = {
     paths,
