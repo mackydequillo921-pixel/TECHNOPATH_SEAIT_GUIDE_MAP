@@ -1723,7 +1723,6 @@ onMounted(async () => {
   window.pathManagerData = {
     paths,
     fromLocations,
-    toLocations,
     gridSettings,
     facilities,
     rooms
