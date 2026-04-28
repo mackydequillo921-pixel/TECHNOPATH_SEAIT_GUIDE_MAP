@@ -1236,16 +1236,44 @@ onMounted(async () => {
 
 @import '../assets/homeview.css';
 
-/* Desktop Floating Action Buttons - Aligned to the right */
+/* Desktop Floating Action Buttons - Vertical stack on the right */
 .desktop-fab-container {
-  position: absolute;
-  bottom: 20px;
+  position: fixed;
+  bottom: 100px;
   right: 20px;
   display: flex;
+  flex-direction: column;
   gap: 12px;
   z-index: 100;
 }
 
+/* All FAB buttons shared styles */
+.desktop-fab-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1a2b3c;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.desktop-fab-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.desktop-fab-btn .material-icons {
+  font-size: 24px;
+  color: white;
+}
+
+/* Legacy button styles (for backward compatibility) */
 .desktop-notification-btn,
 .desktop-chatbot-btn {
   width: 48px;
@@ -1293,9 +1321,21 @@ onMounted(async () => {
 
 @media (max-width: 768px) {
   .desktop-fab-container {
-    bottom: 20px;
-    right: 20px;
+    position: fixed;
+    bottom: 100px;
+    right: 16px;
     left: auto;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .desktop-fab-btn {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .desktop-fab-btn .material-icons {
+    font-size: 22px;
   }
 }
 
