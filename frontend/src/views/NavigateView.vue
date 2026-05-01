@@ -507,7 +507,7 @@ onUnmounted(() => {
 })
 
 // Use shared locations composable (connects to AdminNavGraph)
-const { locations, getLocationName, extractFromSVG, extractLocationsFromPaths } = useLocations()
+const { locations, loadLocations, getLocationName, extractFromSVG, extractLocationsFromPaths } = useLocations()
 
 // Show From and To endpoints (first and last points of paths)
 // Allow any valid ID (string or number)
@@ -1189,6 +1189,9 @@ const loadNavigationData = async () => {
     await pathManager.loadPaths()
     const pathCount = Object.keys(pathManager.getAllPaths()).length
     console.log('[NavigateView] Paths loaded:', pathCount)
+    
+    // Load fresh locations from API (Bug 5 fix: was missing, relied only on localStorage)
+    await loadLocations()
     
     // Extract locations immediately after paths load
     extractLocationsFromPaths()
